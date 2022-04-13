@@ -1,0 +1,7 @@
+torch==1.9.1+cu111
+numpy
+matplotlib
+seaborn
+scipy
+molgrid
+
