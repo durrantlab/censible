@@ -62,7 +62,8 @@ class CENet(nn.Module):
             x = layer(x)
             if isinstance(layer, nn.Conv3d):
                 x = self.func(x)
-        coef_predict = self.fc(x) / 1000  # JDD added
+        # coef_predict = self.fc(x) / 1000  # JDD added
+        coef_predict = self.fc(x)
         batch_size, num_terms = coef_predict.shape
 
         # import pdb; pdb.set_trace()

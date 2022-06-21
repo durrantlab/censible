@@ -49,6 +49,11 @@ def train_single_fold(
 
     train_dataset.populate("crystaltrain%d_cen.types" % fold_num)
 
+    # Get num labels in train_dataset
+    # num_labels = train_dataset.num_labels()
+
+    label_factors = jdd_normalize_inputs(train_dataset, goodfeatures)  # JDD
+
     test_dataset = molgrid.ExampleProvider(
         ligmolcache="lig.molcache2",
         recmolcache="rec.molcache2",
@@ -69,6 +74,8 @@ def train_single_fold(
     optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=0.0001, momentum=0.9)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=0.1)
 
+    # Note that alllabels doesn't contain all the labels, but is simply a tensor
+    # where a given batch's labels will be placed.
     alllabels = torch.zeros(
         (batch_size, train_dataset.num_labels()), dtype=torch.float32, device="cuda"
     )
@@ -84,10 +91,20 @@ def train_single_fold(
 
     for epoch_idx in range(epochs):
         # Loop through the batches (25 examples each)
+        cnt = 0
         for batch_idx, batch in enumerate(train_dataset):
             batch.extract_labels(alllabels)
             label = alllabels[:, 0]  # affinity only
+
+            # Keep only ones that are goodfeatures (see _preprocess.py)
             smina_terms = alllabels[:, 1:][:, goodfeatures]
+
+            # Scale so never outside of -1 to 1
+            smina_terms = label_factors * smina_terms  # JDD
+
+            # print(float(smina_terms.max()), float(smina_terms.min()))
+
+            cnt += smina_terms.size()[0]
 
             # Get the grid (input_tensor)
             gmaker.forward(
@@ -123,6 +140,13 @@ def train_single_fold(
             losses.append(float(loss))
 
         # So you evaluate on test set after each epoch
+        print(cnt)
+
+        # TODO: Note that cnt above is not the same as train_dataset.size(). I
+        # checked the vectors in train_dataset, and there are many repeats. If
+        # you consider the unique values, it does give a number very close to
+        # train_dataset.size(). Need to get to bottom of this. Perhaps
+        # duplicates as part of a balancing procedure?
 
         scheduler.step()
 
@@ -137,8 +161,10 @@ def train_single_fold(
                 gmaker.forward(batch, single_input)
 
                 output, coef_predict, contributions = model(
-                    single_input, single_label[:, 1:][:, goodfeatures]
+                    single_input, 
+                    single_label[:, 1:][:, goodfeatures] * label_factors  # JDD
                 )
+
                 if coef_predict is not None:
                     coefs_predict_lst.append(coef_predict.detach().cpu().numpy())
                     contributions_lst.append(contributions.detach().cpu().numpy())
@@ -177,6 +203,50 @@ def train_single_fold(
         contributions_lst,
     )
 
+def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
+    # TODO: Need to implement ability tosave values in factors and load them
+    # back in for inference.
+
+    # Get all the labels into a numpy array
+    batch = train_dataset.next_batch(train_dataset.size())
+    batch_labels = np.array(
+        [[v for v in item.labels] for item in batch]
+    )
+
+    # Normalize the columns so the values go between 0 and 1
+    factors = np.zeros(batch_labels.shape[1])
+    for i in range(batch_labels.shape[1]):
+        col = batch_labels[:, i]
+        max_abs = np.max(np.abs(col))
+        factors[i] = 1.0
+
+        if max_abs > 0:
+            factors[i] = 1.0 / max_abs
+
+    # Note that first column is affinity. No need to normalize that. Just save
+    # normalization factors on smina terms.
+    factors = factors[1:]
+
+    # Also good to keep only those that are goodfeatures.
+    factors = factors[goodfeatures]
+
+    # To turn off this modification entirely, uncomment out below line. Sets all
+    # factors to 1.
+    # factors[:] = 1
+
+    # Check to make sure between -1 and 1
+    # batch_labels_tmp = batch_labels[:, 1:][:, goodfeatures] * factors
+    # print(
+    #     float(batch_labels_tmp.max()), 
+    #     float(batch_labels_tmp.min())
+    # )
+
+    # Convert factors to a tensor
+    factors = torch.from_numpy(factors).float().to(device="cuda")
+
+    train_dataset.reset()
+
+    return factors
 
 class View(nn.Module):
     def __init__(self, shape):
