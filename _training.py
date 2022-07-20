@@ -103,6 +103,7 @@ def train_single_fold(
             smina_terms = label_factors * smina_terms  # JDD
 
             # print(float(smina_terms.max()), float(smina_terms.min()))
+            # import pdb; pdb.set_trace()
 
             cnt += smina_terms.size()[0]
 
@@ -207,6 +208,8 @@ def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
     # TODO: Need to implement ability tosave values in factors and load them
     # back in for inference.
 
+    MAX_VAL_AFTER_NORM = 1.5
+
     # Get all the labels into a numpy array
     batch = train_dataset.next_batch(train_dataset.size())
     batch_labels = np.array(
@@ -221,7 +224,7 @@ def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
         factors[i] = 1.0
 
         if max_abs > 0:
-            factors[i] = 1.0 / max_abs
+            factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
 
     # Note that first column is affinity. No need to normalize that. Just save
     # normalization factors on smina terms.

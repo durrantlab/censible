@@ -29,7 +29,8 @@ os.chdir("./data/cen/")
 goodfeatures, termnames = preprocess()
 
 model, labels, results, mses, ames, pearsons, losses, coefs_predict_lst, contributions_lst = train_single_fold(
-    CENet, goodfeatures, epochs=400, use_ligands=True
+    CENet, goodfeatures, epochs=400, use_ligands=True,
+    # lr=0.0001
 )
 
 generate_graphs(orig_dir, losses, labels, results, pearsons, coefs_predict_lst, contributions_lst, goodfeatures, termnames)
