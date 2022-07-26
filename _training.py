@@ -27,6 +27,7 @@ def train_single_fold(
             recmolcache="rec.molcache2",
             shuffle=True,
             iteration_scheme=molgrid.IterationScheme.LargeEpoch,
+            # default_batch_size=1
             default_batch_size=batch_size,
             stratify_min=3,
             stratify_max=10,
@@ -48,6 +49,7 @@ def train_single_fold(
         )
 
     train_dataset.populate("crystaltrain%d_cen.types" % fold_num)
+    # train_dataset.populate("all_cen.types")
 
     # Get num labels in train_dataset
     # num_labels = train_dataset.num_labels()
@@ -208,7 +210,7 @@ def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
     # TODO: Need to implement ability tosave values in factors and load them
     # back in for inference.
 
-    MAX_VAL_AFTER_NORM = 1.5
+    MAX_VAL_AFTER_NORM = 1.0
 
     # Get all the labels into a numpy array
     batch = train_dataset.next_batch(train_dataset.size())
@@ -232,6 +234,12 @@ def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
 
     # Also good to keep only those that are goodfeatures.
     factors = factors[goodfeatures]
+
+    # Save factors
+    # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
+    # np.save("factors.jdd.npy", factors)
+
+    # import pdb; pdb.set_trace()
 
     # To turn off this modification entirely, uncomment out below line. Sets all
     # factors to 1.
