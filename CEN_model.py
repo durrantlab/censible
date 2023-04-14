@@ -1,12 +1,8 @@
-import molgrid
 import torch
 import torch.optim as optim
-from _debug import grid_channel_to_xyz_file
+# from _debug import grid_channel_to_xyz_file
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import init
-import numpy as np
-from scipy.stats import pearsonr
 from _training import View
 
 
@@ -55,15 +51,15 @@ class CENet(nn.Module):
         self.fc = nn.Linear(last_size, numterms)
         self.add_module("last_fc", self.fc)
 
-    def forward(self, x, smina_terms):
+    def forward(self, batch, precalculated_terms):
         # should approximate the affinity of the receptor/ligand pair
 
         for layer in self.modules:
-            x = layer(x)
+            batch = layer(batch)
             if isinstance(layer, nn.Conv3d):
-                x = self.func(x)
+                batch = self.func(batch)
         # coef_predict = self.fc(x) / 1000  # JDD added
-        coef_predict = self.fc(x)
+        coef_predict = self.fc(batch)
         batch_size, num_terms = coef_predict.shape
 
         # import pdb; pdb.set_trace()
@@ -72,14 +68,14 @@ class CENet(nn.Module):
         # coef_predict = coef_predict.view(batch_size, num_terms, -1)
 
         # Do batchwise, pairwise multiplication coef_predict and smina_terms
-        contributions = coef_predict * smina_terms
+        weighted_terms = coef_predict * precalculated_terms
 
         # batchwise dot product
         return (
             torch.bmm(
                 coef_predict.view(batch_size, 1, num_terms),
-                smina_terms.view(batch_size, num_terms, 1),
+                precalculated_terms.view(batch_size, num_terms, 1),
             ),
             coef_predict,
-            contributions
+            weighted_terms
         )

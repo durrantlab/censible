@@ -1,61 +1,52 @@
 import molgrid
 import torch
 import torch.optim as optim
-from _debug import grid_channel_to_xyz_file
+# from _debug import grid_channel_to_xyz_file
 import numpy as np
 from scipy.stats import pearsonr
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 
-
 def train_single_fold(
     Net,
-    goodfeatures,
+    which_precalc_terms_to_keep,
     fold_num=0,
     batch_size=25,
     lr=0.01,
     epochs=100,
     step_size=80,
-    use_ligands=True,
 ):
+    # The main object. See
+    # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
+    # TODO: No grid_center parameter here?
     gmaker = molgrid.GridMaker()  # use defaults
-    if use_ligands:
-        # Do use ligands
-        train_dataset = molgrid.ExampleProvider(
-            ligmolcache="lig.molcache2",
-            recmolcache="rec.molcache2",
-            shuffle=True,
-            iteration_scheme=molgrid.IterationScheme.LargeEpoch,
-            # default_batch_size=1
-            default_batch_size=batch_size,
-            stratify_min=3,
-            stratify_max=10,
-            stratify_step=1,
-            stratify_pos=0,
-        )
-    else:
-        # Don't use ligands. TODO: This doesn't work. How do I not include
-        # ligands with gridmol?
-        train_dataset = molgrid.ExampleProvider(
-            recmolcache="rec.molcache2",
-            shuffle=True,
-            iteration_scheme=molgrid.IterationScheme.LargeEpoch,
-            default_batch_size=batch_size,
-            stratify_min=3,
-            stratify_max=10,
-            stratify_step=1,
-            stratify_pos=0,
-        )
 
+    # Create a training dataset, which has access to all receptor and ligand grids.
+    train_dataset = molgrid.ExampleProvider(
+        ligmolcache="lig.molcache2",
+        recmolcache="rec.molcache2",
+        shuffle=True,
+        iteration_scheme=molgrid.IterationScheme.LargeEpoch,
+        # default_batch_size=1
+        default_batch_size=batch_size,
+        stratify_min=3,  # TODO: What do these mean?
+        stratify_max=10,
+        stratify_step=1,
+        stratify_pos=0,
+    )
+
+    # Indicate that the training set will only use those grids in a given file,
+    # not all grids.
     train_dataset.populate("crystaltrain%d_cen.types" % fold_num)
     # train_dataset.populate("all_cen.types")
 
     # Get num labels in train_dataset
     # num_labels = train_dataset.num_labels()
 
-    label_factors = jdd_normalize_inputs(train_dataset, goodfeatures)  # JDD
+    precalc_term_scale_factors = jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep)  # JDD
 
+    # Similarly create a testing dataset.
     test_dataset = molgrid.ExampleProvider(
         ligmolcache="lig.molcache2",
         recmolcache="rec.molcache2",
@@ -64,54 +55,58 @@ def train_single_fold(
     )
     test_dataset.populate("crystaltest%d_cen.types" % fold_num)
 
+    # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
     tensor_shape = (batch_size,) + dims  # shape of batched input
-    input_tensor = torch.zeros(tensor_shape, dtype=torch.float32, device="cuda")
-    single_input = torch.zeros((1,) + dims, dtype=torch.float32, device="cuda")
+    input_tensor_for_training = torch.zeros(tensor_shape, dtype=torch.float32, device="cuda")
+    single_input_for_testing = torch.zeros((1,) + dims, dtype=torch.float32, device="cuda")
 
-    nterms = np.count_nonzero(goodfeatures)
+    # Create the model.
+    nterms = np.count_nonzero(which_precalc_terms_to_keep)
     model = Net(dims, nterms).to("cuda")
     model.apply(weights_init)
 
+    # Setup optimizer and scheduler for training.
     optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=0.0001, momentum=0.9)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=0.1)
 
     # Note that alllabels doesn't contain all the labels, but is simply a tensor
     # where a given batch's labels will be placed.
-    alllabels = torch.zeros(
+    all_labels_for_training = torch.zeros(
         (batch_size, train_dataset.num_labels()), dtype=torch.float32, device="cuda"
     )
-    single_label = torch.zeros(
+    single_label_for_testing = torch.zeros(
         (1, train_dataset.num_labels()), dtype=torch.float32, device="cuda"
     )
 
-    losses = []
-    mses = []
-    ames = []
-    pearsons = []
+    # Keep track of various metrics as training progresses.
+    training_losses = []
+    test_mses = []
+    test_ames = []
+    test_pearsons = []
     coefs_all = []
 
     for epoch_idx in range(epochs):
         # Loop through the batches (25 examples each)
         cnt = 0
         for batch_idx, batch in enumerate(train_dataset):
-            batch.extract_labels(alllabels)
-            label = alllabels[:, 0]  # affinity only
+            batch.extract_labels(all_labels_for_training)
+            affinity_label_for_training = all_labels_for_training[:, 0]  # affinity only
 
-            # Keep only ones that are goodfeatures (see _preprocess.py)
-            smina_terms = alllabels[:, 1:][:, goodfeatures]
+            # Keep only ones that are which_precalc_terms_to_keep (see _preprocess.py)
+            precalculated_terms = all_labels_for_training[:, 1:][:, which_precalc_terms_to_keep]
 
             # Scale so never outside of -1 to 1
-            smina_terms = label_factors * smina_terms  # JDD
+            precalculated_terms = precalc_term_scale_factors * precalculated_terms  # JDD
 
             # print(float(smina_terms.max()), float(smina_terms.min()))
             # import pdb; pdb.set_trace()
 
-            cnt += smina_terms.size()[0]
+            cnt += precalculated_terms.size()[0]
 
-            # Get the grid (input_tensor)
+            # Get the grid (populates input_tensor_for_training)
             gmaker.forward(
-                batch, input_tensor, random_translation=2, random_rotation=True
+                batch, input_tensor_for_training, random_translation=2, random_rotation=True
             )
 
             # grid_channel_to_xyz_file(input_tensor[0][0])
@@ -121,8 +116,9 @@ def train_single_fold(
             # break
 
             # Get the output for this batch. output[0] is output tensor.
-            # output[1] is None for some reason.
-            output, coef_predict, contributions = model(input_tensor, smina_terms)
+            # output[1] is None for some reason. Note that weighted_terms is the
+            # pre-calculated terms times the coefficients.
+            output, coef_predict, weighted_terms = model(input_tensor_for_training, precalculated_terms)
 
             # if batch_idx == 0:
             #     output[0].detach_().cpu().numpy()[:-5]
@@ -130,8 +126,8 @@ def train_single_fold(
             # Print the output, after bringing it to cpu
             # print(output.cpu().detach().numpy().T[0,:5])
 
-            loss = F.smooth_l1_loss(output.flatten(), label.flatten())
-            loss.backward()
+            training_loss = F.smooth_l1_loss(output.flatten(), affinity_label_for_training.flatten())
+            training_loss.backward()
 
             # print(loss)
 
@@ -140,10 +136,10 @@ def train_single_fold(
 
             optimizer.step()
 
-            losses.append(float(loss))
+            training_losses.append(float(training_loss))
 
         # So you evaluate on test set after each epoch
-        print(cnt)
+        # print(cnt)
 
         # TODO: Note that cnt above is not the same as train_dataset.size(). I
         # checked the vectors in train_dataset, and there are many repeats. If
@@ -153,60 +149,61 @@ def train_single_fold(
 
         scheduler.step()
 
-        # eval performance on test set
+        # Evaluate the performance on test set, given that you just finished one
+        # epoch of training.
         with torch.no_grad():
-            results = []
-            testlabels = []
-            coefs_predict_lst = []
-            contributions_lst = []
+            test_results = []
+            test_labels = []
+            test_coefs_predict_lst = []
+            test_weighted_terms_lst = []
             for batch_index, batch in enumerate(test_dataset):
-                batch.extract_labels(single_label)
-                gmaker.forward(batch, single_input)
+                # Get this batch's labels
+                batch.extract_labels(single_label_for_testing)
 
-                output, coef_predict, contributions = model(
-                    single_input, 
-                    single_label[:, 1:][:, goodfeatures] * label_factors  # JDD
+                # Populate the single_input_for_testing tensor with an example.
+                gmaker.forward(batch, single_input_for_testing)
+
+                # Run that through the model.
+                output, coef_predict, weighted_terms = model(
+                    single_input_for_testing, 
+                    single_label_for_testing[:, 1:][:, which_precalc_terms_to_keep] * precalc_term_scale_factors  # JDD
                 )
 
                 if coef_predict is not None:
-                    coefs_predict_lst.append(coef_predict.detach().cpu().numpy())
-                    contributions_lst.append(contributions.detach().cpu().numpy())
+                    # There is a prediction, so copy the coeficients and
+                    # contributions for later display.
+                    test_coefs_predict_lst.append(coef_predict.detach().cpu().numpy())
+                    test_weighted_terms_lst.append(weighted_terms.detach().cpu().numpy())
 
-                    # if batch_index in [0, 1, 2, 3]:
-                    # print(coef_predict.detach().cpu().numpy()[0,:5])
-                    # first_channel = single_input[0][0]
-                    # print(batch_index)
-                    # grid_channel_to_xyz_file(first_channel)
-                    # print("========")
+                test_results.append(output.detach().cpu().numpy())
+                test_labels.append(single_label_for_testing[:, 0].detach().cpu().numpy())
 
-                results.append(output.detach().cpu().numpy())
-                testlabels.append(single_label[:, 0].detach().cpu().numpy())
-
-            results = np.array(results).flatten()
-            labels = np.array(testlabels).flatten()
-            val_rmse = np.sqrt(np.mean((results - labels) ** 2))
+            # Collect the testing statistics.
+            test_results = np.array(test_results).flatten()
+            test_labels = np.array(test_labels).flatten()
+            val_rmse = np.sqrt(np.mean((test_results - test_labels) ** 2))
             if np.isinf(val_rmse):
                 val_rmse = 1000
-            val_ame = np.mean(np.abs(results - labels))
-            pearson_coeff = pearsonr(results, labels)[0]
+            val_ame = np.mean(np.abs(test_results - test_labels))
+            pearson_coeff = pearsonr(test_results, test_labels)[0]
             print("Validation", epoch_idx, val_rmse, val_ame, pearson_coeff)
-            mses.append(val_rmse)
-            ames.append(val_ame)
-            pearsons.append(pearson_coeff)
+            test_mses.append(val_rmse)
+            test_ames.append(val_ame)
+            test_pearsons.append(pearson_coeff)
 
     return (
         model,
-        labels,
-        results,
-        mses,
-        ames,
-        pearsons,
-        losses,
-        coefs_predict_lst,
-        contributions_lst,
+        test_labels,
+        test_results,
+        test_mses,
+        test_ames,
+        test_pearsons,
+        training_losses,
+        test_coefs_predict_lst,
+        test_weighted_terms_lst,
     )
 
-def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
+def jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep):  # JDD
     # TODO: Need to implement ability tosave values in factors and load them
     # back in for inference.
 
@@ -219,21 +216,21 @@ def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
     )
 
     # Normalize the columns so the values go between 0 and 1
-    factors = np.zeros(batch_labels.shape[1])
+    precalc_term_scale_factors = np.zeros(batch_labels.shape[1])
     for i in range(batch_labels.shape[1]):
         col = batch_labels[:, i]
         max_abs = np.max(np.abs(col))
-        factors[i] = 1.0
+        precalc_term_scale_factors[i] = 1.0
 
         if max_abs > 0:
-            factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
+            precalc_term_scale_factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
 
     # Note that first column is affinity. No need to normalize that. Just save
     # normalization factors on smina terms.
-    factors = factors[1:]
+    precalc_term_scale_factors = precalc_term_scale_factors[1:]
 
     # Also good to keep only those that are goodfeatures.
-    factors = factors[goodfeatures]
+    precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
 
     # Save factors
     # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
@@ -253,11 +250,11 @@ def jdd_normalize_inputs(train_dataset, goodfeatures):  # JDD
     # )
 
     # Convert factors to a tensor
-    factors = torch.from_numpy(factors).float().to(device="cuda")
+    precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float().to(device="cuda")
 
     train_dataset.reset()
 
-    return factors
+    return precalc_term_scale_factors
 
 class View(nn.Module):
     def __init__(self, shape):

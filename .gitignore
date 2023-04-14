@@ -13,3 +13,5 @@ all.types
 all_cen.types
 1.pdbbind2020/
 *.old
+
+crystal*_cen.types

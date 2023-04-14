@@ -1,36 +1,55 @@
-import sys, re, glob
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn import init
-import torch.optim as optim
 from _training import train_single_fold
 from _graphs import generate_graphs
 
 # Published performance for this model on this set is 1.5 RMSE and 0.7 Pearson's
 # R, so we are pretty close (could train longer).
-from published_model import Net
+# from published_model import Net
 
 from CEN_model import CENet
-import molgrid
 from _preprocess import preprocess
 
 # import py3Dmol
-from scipy.stats import pearsonr
 import os
 
-orig_dir = os.getcwd() + os.sep
+save_dir = os.getcwd() + os.sep
 
 # change working directory to "./data/cen/"
-os.chdir("./data/cen/")
+# os.chdir("./data/cen/")
+os.chdir("./prepare_data/")
 
 # allct = np.loadtxt("all_cen.types", max_rows=5, dtype=str)
 
-goodfeatures, termnames = preprocess()
+# which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
+# keeping, False otherwise. term_names is a list of all the term names.
+which_precalc_terms_to_keep, term_names = preprocess()
 
-model, labels, results, mses, ames, pearsons, losses, coefs_predict_lst, contributions_lst = train_single_fold(
-    CENet, goodfeatures, epochs=400, use_ligands=True,
+# Train the model
+(
+    model,
+    labels,
+    results,
+    test_mses,
+    ames,
+    pearsons,
+    training_losses,
+    coefs_predict_lst,
+    contributions_lst,
+) = train_single_fold(
+    CENet,
+    which_precalc_terms_to_keep,
+    epochs=400,
+    # use_ligands=True,
     # lr=0.0001
 )
 
-generate_graphs(orig_dir, losses, labels, results, pearsons, coefs_predict_lst, contributions_lst, goodfeatures, termnames)
+generate_graphs(
+    save_dir,
+    training_losses,
+    labels,
+    results,
+    pearsons,
+    coefs_predict_lst,
+    contributions_lst,
+    which_precalc_terms_to_keep,
+    term_names,
+)

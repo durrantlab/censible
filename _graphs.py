@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+import datetime
 
-def _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, orig_dir):
+def _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, save_dir):
 
     plt.clf()
     NUM_EXAMPLES_TO_PICK = 100
@@ -14,7 +16,7 @@ def _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, orig_dir):
 
     # Save ccweights to csv file, using the values in header as the column names
     np.savetxt(
-        orig_dir + "imgs/a_few_weights.csv",
+        save_dir + "a_few_weights.csv",
         ccweights,
         delimiter=",",
         header=",".join(header),
@@ -32,9 +34,9 @@ def _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, orig_dir):
     sns.heatmap(ccweights)
     plt.xlabel("Weights")
     plt.ylabel("Prot/Lig Complexes")
-    plt.savefig(orig_dir + "imgs/a_few_weights.png")
+    plt.savefig(save_dir + "a_few_weights.png")
 
-def _contributions_heatmap(contributions_lst, goodfeatures, termnames, orig_dir):
+def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir):
 
     plt.clf()
     NUM_EXAMPLES_TO_PICK = 100
@@ -46,7 +48,7 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, orig_dir)
 
     # Save ccweights to csv file, using the values in header as the column names
     np.savetxt(
-        orig_dir + "imgs/a_few_contributions.csv",
+        save_dir + "a_few_contributions.csv",
         contribs,
         delimiter=",",
         header=",".join(header),
@@ -56,7 +58,7 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, orig_dir)
     sns.heatmap(contribs)
     plt.xlabel("Contributions")
     plt.ylabel("Prot/Lig Complexes")
-    plt.savefig(orig_dir + "imgs/a_few_contributions.png")
+    plt.savefig(save_dir + "a_few_contributions.png")
 
 
 def generate_graphs(
@@ -70,6 +72,18 @@ def generate_graphs(
     goodfeatures,
     termnames,
 ):
+    # Create the directory if it doesn't exist
+    if not os.path.exists(orig_dir + "imgs"):
+        os.mkdir(orig_dir + "imgs")
+
+    # Get the current date and time as a string, in a format that can be a
+    # filename
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
+
+    save_dir = orig_dir + "imgs/" + now_str + "/"
+    os.mkdir(save_dir)
+
     # Losses per batch
     plt.plot(losses)
     plt.plot(
@@ -78,21 +92,21 @@ def generate_graphs(
         np.convolve(losses, np.ones(100) / 100, mode="valid"),
     )
     plt.ylim(0, 8)
-    plt.savefig(orig_dir + "imgs/loss_per_batch__train.png")
+    plt.savefig(save_dir + "loss_per_batch__train.png")
 
     # Clear plot and start over
     plt.clf()
     plt.plot(pearsons)
-    plt.savefig(orig_dir + "imgs/pearsons_per_epoch__test.png")
+    plt.savefig(save_dir + "pearsons_per_epoch__test.png")
 
     # Predictions vs. reality
     plt.clf()
     j = sns.jointplot(x=labels, y=results)
     plt.suptitle("R = %.2f" % pearsons[-1])
-    plt.savefig(orig_dir + "imgs/label_vs_predict_final__test.png")
+    plt.savefig(save_dir + "label_vs_predict_final__test.png")
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
-    _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, orig_dir)
+    _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, save_dir)
 
-    _contributions_heatmap(contributions_lst, goodfeatures, termnames, orig_dir)
+    _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir)
