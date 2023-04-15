@@ -77,7 +77,9 @@ for pdbid in affinity_dict:
 for pdbid in pdbids_to_remove:
     del affinity_dict[pdbid]
 
+g = open("all_centered.types", "w")
 with open("all.types", "w") as f:
     for pdbid in affinity_dict:
-        # NOTE: Paths wrong here.
         f.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.gninatypes {paths[pdbid]}/{pdbid}_ligand.gninatypes\n")
+        g.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein_centered.gninatypes {paths[pdbid]}/{pdbid}_ligand_centered.gninatypes\n")
+g.close()

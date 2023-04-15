@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import datetime
+import json
 
 def _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, save_dir):
 
@@ -71,6 +72,7 @@ def generate_graphs(
     contributions_lst,
     goodfeatures,
     termnames,
+    params
 ):
     # Create the directory if it doesn't exist
     if not os.path.exists(orig_dir + "imgs"):
@@ -110,3 +112,7 @@ def generate_graphs(
     _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, save_dir)
 
     _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir)
+
+    # Save params as json
+    with open(save_dir + "params.json", "w") as f:
+        json.dump(params, f, indent=4)

@@ -9,9 +9,6 @@ pdbbind2020.hdf5
 *.molcache2
 create_caches2.py
 cache/
-all.types
-all_cen.types
 1.pdbbind2020/
 *.old
-
-crystal*_cen.types
+*.types

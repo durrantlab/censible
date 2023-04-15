@@ -1,5 +1,6 @@
 from _training import train_single_fold
 from _graphs import generate_graphs
+import json
 
 # Published performance for this model on this set is 1.5 RMSE and 0.7 Pearson's
 # R, so we are pretty close (could train longer).
@@ -10,6 +11,16 @@ from _preprocess import preprocess
 
 # import py3Dmol
 import os
+
+params = {
+    "epochs": 400,
+    "fold_num": 0,
+    "batch_size": 25,
+    "lr": 0.01,
+    "step_size": 80,
+    # "prefix": "crystal",
+    "prefix": "randomsplit",
+}
 
 save_dir = os.getcwd() + os.sep
 
@@ -37,7 +48,9 @@ which_precalc_terms_to_keep, term_names = preprocess()
 ) = train_single_fold(
     CENet,
     which_precalc_terms_to_keep,
-    epochs=400,
+    params
+    # epochs=params["epochs"],
+    # fold_num=params["fold_num"]
     # use_ligands=True,
     # lr=0.0001
 )
@@ -52,4 +65,5 @@ generate_graphs(
     contributions_lst,
     which_precalc_terms_to_keep,
     term_names,
+    params
 )

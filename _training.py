@@ -11,11 +11,12 @@ from torch.nn import init
 def train_single_fold(
     Net,
     which_precalc_terms_to_keep,
-    fold_num=0,
-    batch_size=25,
-    lr=0.01,
-    epochs=100,
-    step_size=80,
+    params
+    # fold_num=0,
+    # batch_size=25,
+    # lr=0.01,
+    # epochs=100,
+    # step_size=80,
 ):
     # The main object. See
     # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
@@ -29,7 +30,7 @@ def train_single_fold(
         shuffle=True,
         iteration_scheme=molgrid.IterationScheme.LargeEpoch,
         # default_batch_size=1
-        default_batch_size=batch_size,
+        default_batch_size=params["batch_size"],
         stratify_min=3,  # TODO: What do these mean?
         stratify_max=10,
         stratify_step=1,
@@ -38,7 +39,7 @@ def train_single_fold(
 
     # Indicate that the training set will only use those grids in a given file,
     # not all grids.
-    train_dataset.populate("crystaltrain%d_cen.types" % fold_num)
+    train_dataset.populate(params["prefix"] + ("train%d_cen.types" % params["fold_num"]))
     # train_dataset.populate("all_cen.types")
 
     # Get num labels in train_dataset
@@ -53,11 +54,11 @@ def train_single_fold(
         iteration_scheme=molgrid.IterationScheme.LargeEpoch,
         default_batch_size=1,
     )
-    test_dataset.populate("crystaltest%d_cen.types" % fold_num)
+    test_dataset.populate(params["prefix"] + ("test%d_cen.types" % params["fold_num"]))
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
-    tensor_shape = (batch_size,) + dims  # shape of batched input
+    tensor_shape = (params["batch_size"],) + dims  # shape of batched input
     input_tensor_for_training = torch.zeros(tensor_shape, dtype=torch.float32, device="cuda")
     single_input_for_testing = torch.zeros((1,) + dims, dtype=torch.float32, device="cuda")
 
@@ -67,13 +68,13 @@ def train_single_fold(
     model.apply(weights_init)
 
     # Setup optimizer and scheduler for training.
-    optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=0.0001, momentum=0.9)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=0.1)
+    optimizer = optim.SGD(model.parameters(), lr=params["lr"], weight_decay=0.0001, momentum=0.9)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params["step_size"], gamma=0.1)
 
     # Note that alllabels doesn't contain all the labels, but is simply a tensor
     # where a given batch's labels will be placed.
     all_labels_for_training = torch.zeros(
-        (batch_size, train_dataset.num_labels()), dtype=torch.float32, device="cuda"
+        (params["batch_size"], train_dataset.num_labels()), dtype=torch.float32, device="cuda"
     )
     single_label_for_testing = torch.zeros(
         (1, train_dataset.num_labels()), dtype=torch.float32, device="cuda"
@@ -86,7 +87,7 @@ def train_single_fold(
     test_pearsons = []
     coefs_all = []
 
-    for epoch_idx in range(epochs):
+    for epoch_idx in range(params["epochs"]):
         # Loop through the batches (25 examples each)
         cnt = 0
         for batch_idx, batch in enumerate(train_dataset):
