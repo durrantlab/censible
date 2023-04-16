@@ -46,7 +46,7 @@ def make_all_types(out_flnm):
             f.write(result)
 
 def main():
-    # make_all_types("all.types")
+    make_all_types("all.types")
     make_all_types("all_centered.types")
 
 if __name__ == '__main__':
