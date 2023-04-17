@@ -13,8 +13,8 @@ from _preprocess import preprocess
 import os
 
 params = {
-    "epochs": 400,
-    "fold_num": 0,
+    "epochs": 250,  # 400,
+    "fold_num": 1,
     "batch_size": 25,
     "lr": 0.01,
     "step_size": 80,
@@ -33,6 +33,9 @@ os.chdir("./prepare_data/")
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
 # keeping, False otherwise. term_names is a list of all the term names.
 which_precalc_terms_to_keep, term_names = preprocess()
+
+# This keeps only the smina terms (not gaussian terms)
+which_precalc_terms_to_keep[24:] = False
 
 # Train the model
 (
