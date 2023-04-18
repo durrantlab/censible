@@ -14,7 +14,7 @@ import os
 
 params = {
     "epochs": 250,  # 400,
-    "fold_num": 1,
+    "fold_num": 0,
     "batch_size": 25,
     "lr": 0.01,
     "step_size": 80,
@@ -35,12 +35,12 @@ os.chdir("./prepare_data/")
 which_precalc_terms_to_keep, term_names = preprocess()
 
 # This keeps only the smina terms (not gaussian terms)
-which_precalc_terms_to_keep[24:] = False
+# which_precalc_terms_to_keep[24:] = False
 
 # Train the model
 (
     model,
-    labels,
+    tmp_labels,
     results,
     test_mses,
     ames,
@@ -48,10 +48,12 @@ which_precalc_terms_to_keep[24:] = False
     training_losses,
     coefs_predict_lst,
     contributions_lst,
+    which_precalc_terms_to_keep
 ) = train_single_fold(
     CENet,
     which_precalc_terms_to_keep,
-    params
+    params,
+    term_names
     # epochs=params["epochs"],
     # fold_num=params["fold_num"]
     # use_ligands=True,
@@ -61,7 +63,7 @@ which_precalc_terms_to_keep[24:] = False
 generate_graphs(
     save_dir,
     training_losses,
-    labels,
+    tmp_labels,
     results,
     pearsons,
     coefs_predict_lst,

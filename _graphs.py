@@ -5,15 +5,14 @@ import os
 import datetime
 import json
 
-def _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, save_dir):
-
+def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir):
     plt.clf()
     NUM_EXAMPLES_TO_PICK = 100
     np.random.shuffle(coefs_predict_lst)
     ccweights = np.array(coefs_predict_lst[:NUM_EXAMPLES_TO_PICK])
-    num_terms_kept = np.sum(goodfeatures == True)
+    num_terms_kept = np.sum(which_precalc_terms_to_keep == True)
     ccweights = np.reshape(ccweights, (NUM_EXAMPLES_TO_PICK, num_terms_kept))
-    header = [h.replace(",", "_") for h in termnames[goodfeatures]]
+    header = [h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]]
 
     # Save ccweights to csv file, using the values in header as the column names
     np.savetxt(
@@ -70,7 +69,7 @@ def generate_graphs(
     pearsons,
     coefs_predict_lst,
     contributions_lst,
-    goodfeatures,
+    which_precalc_terms_to_keep,
     termnames,
     params
 ):
@@ -109,9 +108,9 @@ def generate_graphs(
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
-    _weights_heatmap(coefs_predict_lst, goodfeatures, termnames, save_dir)
+    _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir)
 
-    _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir)
+    _contributions_heatmap(contributions_lst, which_precalc_terms_to_keep, termnames, save_dir)
 
     # Save params as json
     with open(save_dir + "params.json", "w") as f:
