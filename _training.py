@@ -81,13 +81,11 @@ def train_single_fold(
 
     precalc_term_scale_factors = jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep)  # JDD
 
-    import pdb; pdb.set_trace()
-
-    # Instead, precalc_term_scale_factors is 1 for all terms.
-    precalc_term_scale_factors = np.ones((1, which_precalc_terms_to_keep.sum()))
-    precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).to("cuda").float()
-
-
+    # Instead, precalc_term_scale_factors is 1 for all terms. Note that when
+    # below commented out, still doesn't work as well. So this kind of
+    # normalization seems needful.
+    # precalc_term_scale_factors = np.ones((1, which_precalc_terms_to_keep.sum()))
+    # precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).to("cuda").float()
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
@@ -115,64 +113,63 @@ def train_single_fold(
         # Loop through the batches (25 examples each)
         cnt = 0
         # import pdb; pdb.set_trace()
-        while True:
-            try:
-                training_finished = False
-                for batch_idx, train_batch in enumerate(train_dataset):
-                    train_batch.extract_labels(all_labels_for_training)
-                    affinity_label_for_training = all_labels_for_training[:, 0]  # affinity only
+        # print("epoch", epoch_idx)
 
-                    # Keep only ones that are which_precalc_terms_to_keep (see _preprocess.py)
-                    precalculated_terms = all_labels_for_training[:, 1:][:, which_precalc_terms_to_keep]
+        # train_dataset is exhausted at this point for some reason, but .reset()
+        # doesn't seem to work. Run optimizer step to avoid error, but would be
+        # good to get to the bottom of why reset doesn't work here. As is,
+        # skipping first generation (effectively).
+        optimizer.step()
 
-                    # Scale so never outside of -1 to 1
-                    precalculated_terms = precalc_term_scale_factors * precalculated_terms  # JDD
+        for batch_idx, train_batch in enumerate(train_dataset):
+            # print("    batch", batch_idx)
+            train_batch.extract_labels(all_labels_for_training)
+            affinity_label_for_training = all_labels_for_training[:, 0]  # affinity only
 
-                    # print(float(smina_terms.max()), float(smina_terms.min()))
-                    # import pdb; pdb.set_trace()
+            # Keep only ones that are which_precalc_terms_to_keep (see _preprocess.py)
+            precalculated_terms = all_labels_for_training[:, 1:][:, which_precalc_terms_to_keep]
 
-                    cnt += precalculated_terms.size()[0]
+            # Scale so never outside of -1 to 1
+            precalculated_terms = precalc_term_scale_factors * precalculated_terms  # JDD
 
-                    # Get the grid (populates input_tensor_for_training)
-                    gmaker.forward(
-                        train_batch, input_tensor_for_training, random_translation=2, random_rotation=True
-                    )
+            # print(float(smina_terms.max()), float(smina_terms.min()))
+            # import pdb; pdb.set_trace()
 
-                    # grid_channel_to_xyz_file(input_tensor[0][0])
-                    # print(batch_idx)
-                    # print("")
-                    # grid_channel_to_xyz_file(input_tensor[21][0])
-                    # break
+            cnt += precalculated_terms.size()[0]
 
-                    # Get the output for this batch. output[0] is output tensor.
-                    # output[1] is None for some reason. Note that weighted_terms is the
-                    # pre-calculated terms times the coefficients.
-                    output, coef_predict, weighted_terms = model(input_tensor_for_training, precalculated_terms)
+            # Get the grid (populates input_tensor_for_training)
+            gmaker.forward(
+                train_batch, input_tensor_for_training, random_translation=2, random_rotation=True
+            )
 
-                    # if batch_idx == 0:
-                    #     output[0].detach_().cpu().numpy()[:-5]
+            # grid_channel_to_xyz_file(input_tensor[0][0])
+            # print(batch_idx)
+            # print("")
+            # grid_channel_to_xyz_file(input_tensor[21][0])
+            # break
 
-                    # Print the output, after bringing it to cpu
-                    # print(output.cpu().detach().numpy().T[0,:5])
+            # Get the output for this batch. output[0] is output tensor.
+            # output[1] is None for some reason. Note that weighted_terms is the
+            # pre-calculated terms times the coefficients.
+            output, coef_predict, weighted_terms = model(input_tensor_for_training, precalculated_terms)
 
-                    training_loss = F.smooth_l1_loss(output.flatten(), affinity_label_for_training.flatten())
-                    training_loss.backward()
+            # if batch_idx == 0:
+            #     output[0].detach_().cpu().numpy()[:-5]
 
-                    # print(loss)
+            # Print the output, after bringing it to cpu
+            # print(output.cpu().detach().numpy().T[0,:5])
 
-                    # clip gradients
-                    nn.utils.clip_grad_norm_(model.parameters(), 1)
+            training_loss = F.smooth_l1_loss(output.flatten(), affinity_label_for_training.flatten())
+            training_loss.backward()
 
-                    optimizer.step()
+            # print(loss)
 
-                    training_losses.append(float(training_loss))
-                    training_finished = True
-                    break
-                if training_finished:
-                    break
-            except StopIteration:
-                print("Reseting database...")
-                train_dataset.reset()  # Reset the dataset for the next epoch
+            # clip gradients
+            nn.utils.clip_grad_norm_(model.parameters(), 1)
+
+            optimizer.step()
+
+            training_losses.append(float(training_loss))
 
         # So you evaluate on test set after each epoch
         # print(cnt)

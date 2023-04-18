@@ -1,6 +1,7 @@
 from _training import train_single_fold
 from _graphs import generate_graphs
 import json
+import argparse
 
 # Published performance for this model on this set is 1.5 RMSE and 0.7 Pearson's
 # R, so we are pretty close (could train longer).
@@ -13,7 +14,7 @@ from _preprocess import preprocess
 import os
 
 params = {
-    "epochs": 250,  # 400,
+    "epochs": 400,
     "fold_num": 0,
     "batch_size": 25,
     "lr": 0.01,
@@ -21,6 +22,15 @@ params = {
     # "prefix": "crystal",
     "prefix": "randomsplit",
 }
+
+# Create argparser with same args as params
+parser = argparse.ArgumentParser()
+for key, value in params.items():
+    parser.add_argument("--" + key, type=type(value), default=value)
+args = parser.parse_args()
+params = vars(args)
+
+print(params)
 
 save_dir = os.getcwd() + os.sep
 

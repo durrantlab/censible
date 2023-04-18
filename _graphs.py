@@ -115,3 +115,8 @@ def generate_graphs(
     # Save params as json
     with open(save_dir + "params.json", "w") as f:
         json.dump(params, f, indent=4)
+
+    # Save the term names
+    with open(save_dir + "termnames.txt", "w") as f:
+        f.write("\n".join(termnames[which_precalc_terms_to_keep]))
+
