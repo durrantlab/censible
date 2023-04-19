@@ -15,11 +15,6 @@ def train_single_fold(
     params,
     term_names,
     precalc_term_scale_factors
-    # fold_num=0,
-    # batch_size=25,
-    # lr=0.01,
-    # epochs=100,
-    # step_size=80,
 ):
     # The main object. See
     # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
@@ -45,9 +40,6 @@ def train_single_fold(
     train_dataset.populate(params["prefix"] + ("train%d_cen.types" % params["fold_num"]))
     # train_dataset.populate("all_cen.types")
 
-    # Get num labels in train_dataset
-    # num_labels = train_dataset.num_labels()
-
     # Similarly create a testing dataset.
     test_dataset = molgrid.ExampleProvider(
         ligmolcache="lig.molcache2",
@@ -72,7 +64,6 @@ def train_single_fold(
     # terms that are all zeros in the training set, but not in the testing set.
     # So the training process puts no constraints on those terms, inevitably
     # leading to bad results when evaluating on the test set.
-
     tmp_labels = []
     for batch_index, train_batch in enumerate(train_dataset):
         train_batch.extract_labels(all_labels_for_training)
@@ -80,13 +71,9 @@ def train_single_fold(
     which_precalc_terms_to_keep = remove_rare_terms(np.vstack(tmp_labels), which_precalc_terms_to_keep)
     train_dataset.reset()
 
-    # precalc_term_scale_factors = jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep)  # JDD
-
-    # Instead, precalc_term_scale_factors is 1 for all terms. Note that when
-    # below commented out, still doesn't work as well. So this kind of
-    # normalization seems needful.
-    # precalc_term_scale_factors = np.ones((1, which_precalc_terms_to_keep.sum()))
-    # precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).to("cuda").float()
+    # Update precalc_term_scale_factors to include only the terms that are
+    # actually used.
+    precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
@@ -112,8 +99,6 @@ def train_single_fold(
 
     for epoch_idx in range(params["epochs"]):
         # Loop through the batches (25 examples each)
-        cnt = 0
-        # import pdb; pdb.set_trace()
         # print("epoch", epoch_idx)
 
         # train_dataset is exhausted at this point for some reason, but .reset()
@@ -133,11 +118,6 @@ def train_single_fold(
             # Scale so never outside of -1 to 1
             precalculated_terms = precalc_term_scale_factors * precalculated_terms  # JDD
 
-            # print(float(smina_terms.max()), float(smina_terms.min()))
-            # import pdb; pdb.set_trace()
-
-            cnt += precalculated_terms.size()[0]
-
             # Get the grid (populates input_tensor_for_training)
             gmaker.forward(
                 train_batch, input_tensor_for_training, random_translation=2, random_rotation=True
@@ -154,12 +134,6 @@ def train_single_fold(
             # pre-calculated terms times the coefficients.
             output, coef_predict, weighted_terms = model(input_tensor_for_training, precalculated_terms)
 
-            # if batch_idx == 0:
-            #     output[0].detach_().cpu().numpy()[:-5]
-
-            # Print the output, after bringing it to cpu
-            # print(output.cpu().detach().numpy().T[0,:5])
-
             training_loss = F.smooth_l1_loss(output.flatten(), affinity_label_for_training.flatten())
             training_loss.backward()
 
@@ -171,15 +145,6 @@ def train_single_fold(
             optimizer.step()
 
             training_losses.append(float(training_loss))
-
-        # So you evaluate on test set after each epoch
-        # print(cnt)
-
-        # TODO: Note that cnt above is not the same as train_dataset.size(). I
-        # checked the vectors in train_dataset, and there are many repeats. If
-        # you consider the unique values, it does give a number very close to
-        # train_dataset.size(). Need to get to bottom of this. Perhaps
-        # duplicates as part of a balancing procedure?
 
         scheduler.step()
 
@@ -239,61 +204,10 @@ def train_single_fold(
         training_losses,
         test_coefs_predict_lst,
         test_weighted_terms_lst,
-        which_precalc_terms_to_keep
+        which_precalc_terms_to_keep,
+        precalc_term_scale_factors
     )
 
-def jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep):  # JDD
-    # TODO: Need to implement ability tosave values in factors and load them
-    # back in for inference.
-
-    MAX_VAL_AFTER_NORM = 1.0
-
-    # Get all the labels into a numpy array
-    batch = train_dataset.next_batch(train_dataset.size())
-    batch_labels = np.array(
-        [[v for v in item.labels] for item in batch]
-    )
-
-    # Normalize the columns so the values go between 0 and 1
-    precalc_term_scale_factors = np.zeros(batch_labels.shape[1])
-    for i in range(batch_labels.shape[1]):
-        col = batch_labels[:, i]
-        max_abs = np.max(np.abs(col))
-        precalc_term_scale_factors[i] = 1.0
-
-        if max_abs > 0:
-            precalc_term_scale_factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
-
-    # Note that first column is affinity. No need to normalize that. Just save
-    # normalization factors on smina terms.
-    precalc_term_scale_factors = precalc_term_scale_factors[1:]
-
-    # Also good to keep only those that are goodfeatures.
-    precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
-
-    # Save factors
-    # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
-    # np.save("factors.jdd.npy", factors)
-
-    # import pdb; pdb.set_trace()
-
-    # To turn off this modification entirely, uncomment out below line. Sets all
-    # factors to 1.
-    # factors[:] = 1
-
-    # Check to make sure between -1 and 1
-    # batch_labels_tmp = batch_labels[:, 1:][:, goodfeatures] * factors
-    # print(
-    #     float(batch_labels_tmp.max()), 
-    #     float(batch_labels_tmp.min())
-    # )
-
-    # Convert factors to a tensor
-    precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float().to(device="cuda")
-
-    train_dataset.reset()
-
-    return precalc_term_scale_factors
 
 class View(nn.Module):
     def __init__(self, shape):

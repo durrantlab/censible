@@ -25,7 +25,6 @@ def preprocess():
         default_batch_size=1,
     )
     all_examples.populate("all_cen.types")
-    # labels = torch.tensor(all_examples.num_labels(), dtype=torch.float32)
 
     # Get the experimentally measured affinities as well as the other terms.
     all_affinities = []
@@ -44,19 +43,9 @@ def preprocess():
     #     if allterms[1][t] != 0:
     #         print(str(t) + "  " + str(termnames[t]) + ": " + str(allterms[1][t]))
 
-    # # Find the terms that are not just all zeros. which_precalc_terms_to_keep is a boolean
-    # # array, True if the term should be retained, false otherwise.
-    # cnts = np.count_nonzero(all_terms, axis=0)
-    # # goodfeatures = cnts > 4000  # JDD: To keep only a few terms. Performs just as well.
-    # which_precalc_terms_to_keep = cnts > 0
-
-    # num_terms_kept = np.sum(which_precalc_terms_to_keep == True)
-    # print("Number of terms retained: " + str(num_terms_kept))
-
     which_precalc_terms_to_keep = remove_rare_terms(all_terms)
 
-    precalc_term_scale_factors = normalize_terms(all_terms)
-    import pdb; pdb.set_trace()
+    precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
 
     return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
 
@@ -73,8 +62,6 @@ def remove_rare_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.nda
     # Find the terms that are not just all zeros. which_precalc_terms_to_keep is a boolean
     # array, True if the term should be retained, false otherwise.
     cnts = np.count_nonzero(all_terms, axis=0)
-    # goodfeatures = cnts > 4000  # JDD: To keep only a few terms. Performs just as well.
-    # to_keep = cnts > 0
     to_keep = cnts > min_examples_permitted
 
     # Update which_precalc_terms_to_keep
@@ -88,15 +75,13 @@ def remove_rare_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.nda
 
     return which_precalc_terms_to_keep
 
-def normalize_terms(all_terms):
+def normalize_terms(all_terms, which_precalc_terms_to_keep):
     # TODO: Need to implement ability tosave values in factors and load them
     # back in for inference.
 
     MAX_VAL_AFTER_NORM = 1.0
 
     # Normalize the columns so the values go between 0 and 1. 
-    # precalc_term_scale_factors = MAX_VAL_AFTER_NORM/np.max(np.abs(all_terms), axis=0)
-
     precalc_term_scale_factors = np.zeros(all_terms.shape[1])
     for i in range(all_terms.shape[1]):
         col = all_terms[:, i]
@@ -106,19 +91,9 @@ def normalize_terms(all_terms):
         if max_abs > 0:
             precalc_term_scale_factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
 
-    # Note that first column is affinity. No need to normalize that. Just save
-    # normalization factors on smina terms.
-    # import pdb; pdb.set_trace()
-    # precalc_term_scale_factors = precalc_term_scale_factors[1:]
-
-    # # Also good to keep only those that are goodfeatures.
-    # precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
-
     # Save factors
     # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
     # np.save("factors.jdd.npy", factors)
-
-    # import pdb; pdb.set_trace()
 
     # To turn off this modification entirely, uncomment out below line. Sets all
     # factors to 1.
@@ -133,7 +108,5 @@ def normalize_terms(all_terms):
 
     # Convert factors to a tensor
     precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float().to(device="cuda")
-
-    # train_dataset.reset()
 
     return precalc_term_scale_factors

@@ -62,7 +62,7 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir)
 
 
 def generate_graphs(
-    orig_dir,
+    save_dir,
     losses,
     labels,
     results,
@@ -73,18 +73,6 @@ def generate_graphs(
     termnames,
     params
 ):
-    # Create the directory if it doesn't exist
-    if not os.path.exists(orig_dir + "imgs"):
-        os.mkdir(orig_dir + "imgs")
-
-    # Get the current date and time as a string, in a format that can be a
-    # filename
-    now = datetime.datetime.now()
-    now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
-
-    save_dir = orig_dir + "imgs/" + now_str + "/"
-    os.mkdir(save_dir)
-
     # Losses per batch
     plt.plot(losses)
     plt.plot(
@@ -117,6 +105,6 @@ def generate_graphs(
         json.dump(params, f, indent=4)
 
     # Save the term names
-    with open(save_dir + "termnames.txt", "w") as f:
-        f.write("\n".join(termnames[which_precalc_terms_to_keep]))
+    # with open(save_dir + "termnames.txt", "w") as f:
+    #     f.write("\n".join(termnames[which_precalc_terms_to_keep]))
 
