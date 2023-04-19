@@ -13,7 +13,8 @@ def train_single_fold(
     Net,
     which_precalc_terms_to_keep,
     params,
-    term_names
+    term_names,
+    precalc_term_scale_factors
     # fold_num=0,
     # batch_size=25,
     # lr=0.01,
@@ -79,7 +80,7 @@ def train_single_fold(
     which_precalc_terms_to_keep = remove_rare_terms(np.vstack(tmp_labels), which_precalc_terms_to_keep)
     train_dataset.reset()
 
-    precalc_term_scale_factors = jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep)  # JDD
+    # precalc_term_scale_factors = jdd_normalize_inputs(train_dataset, which_precalc_terms_to_keep)  # JDD
 
     # Instead, precalc_term_scale_factors is 1 for all terms. Note that when
     # below commented out, still doesn't work as well. So this kind of

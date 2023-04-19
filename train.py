@@ -14,7 +14,7 @@ from _preprocess import preprocess
 import os
 
 params = {
-    "epochs": 400,
+    "epochs": 250, # 400,
     "fold_num": 0,
     "batch_size": 25,
     "lr": 0.01,

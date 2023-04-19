@@ -55,7 +55,10 @@ def preprocess():
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms)
 
-    return which_precalc_terms_to_keep, term_names
+    precalc_term_scale_factors = normalize_terms(all_terms)
+    import pdb; pdb.set_trace()
+
+    return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
 
 def remove_rare_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray = None):
     global RARE_TERM_RATIO_CUTOFF
@@ -85,3 +88,52 @@ def remove_rare_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.nda
 
     return which_precalc_terms_to_keep
 
+def normalize_terms(all_terms):
+    # TODO: Need to implement ability tosave values in factors and load them
+    # back in for inference.
+
+    MAX_VAL_AFTER_NORM = 1.0
+
+    # Normalize the columns so the values go between 0 and 1. 
+    # precalc_term_scale_factors = MAX_VAL_AFTER_NORM/np.max(np.abs(all_terms), axis=0)
+
+    precalc_term_scale_factors = np.zeros(all_terms.shape[1])
+    for i in range(all_terms.shape[1]):
+        col = all_terms[:, i]
+        max_abs = np.max(np.abs(col))
+        precalc_term_scale_factors[i] = 1.0
+
+        if max_abs > 0:
+            precalc_term_scale_factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
+
+    # Note that first column is affinity. No need to normalize that. Just save
+    # normalization factors on smina terms.
+    # import pdb; pdb.set_trace()
+    # precalc_term_scale_factors = precalc_term_scale_factors[1:]
+
+    # # Also good to keep only those that are goodfeatures.
+    # precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
+
+    # Save factors
+    # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
+    # np.save("factors.jdd.npy", factors)
+
+    # import pdb; pdb.set_trace()
+
+    # To turn off this modification entirely, uncomment out below line. Sets all
+    # factors to 1.
+    # factors[:] = 1
+
+    # Check to make sure between -1 and 1
+    # batch_labels_tmp = batch_labels[:, 1:][:, goodfeatures] * factors
+    # print(
+    #     float(batch_labels_tmp.max()), 
+    #     float(batch_labels_tmp.min())
+    # )
+
+    # Convert factors to a tensor
+    precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float().to(device="cuda")
+
+    # train_dataset.reset()
+
+    return precalc_term_scale_factors
