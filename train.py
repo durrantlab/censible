@@ -68,8 +68,6 @@ which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess
 )
 
 # Save model
-import pdb; pdb.set_trace()
-
 # Create the directory if it doesn't exist
 if not os.path.exists(orig_dir + "imgs"):
     os.mkdir(orig_dir + "imgs")

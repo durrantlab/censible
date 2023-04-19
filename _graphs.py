@@ -108,3 +108,7 @@ def generate_graphs(
     # with open(save_dir + "termnames.txt", "w") as f:
     #     f.write("\n".join(termnames[which_precalc_terms_to_keep]))
 
+    # Save pearsons as csv
+    np.savetxt(save_dir + "pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
+    
+
