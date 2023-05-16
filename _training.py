@@ -68,12 +68,12 @@ def train_single_fold(
     for batch_index, train_batch in enumerate(train_dataset):
         train_batch.extract_labels(all_labels_for_training)
         tmp_labels.append(all_labels_for_training.cpu().numpy()[:, 1:])
-    which_precalc_terms_to_keep = remove_rare_terms(np.vstack(tmp_labels), which_precalc_terms_to_keep)
     train_dataset.reset()
 
     # Update precalc_term_scale_factors to include only the terms that are
     # actually used.
     precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
+    print(precalc_term_scale_factors)
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())

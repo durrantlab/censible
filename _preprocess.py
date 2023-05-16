@@ -46,7 +46,7 @@ def preprocess(termtypes):
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes)
 
     precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
-    np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors)
+    np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors.cpu())
 
     return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
 
@@ -70,14 +70,14 @@ def remove_rare_terms(all_terms: np.ndarray, termtypes: str, which_precalc_terms
         which_precalc_terms_to_keep, to_keep
     )
 
-    if termtypes == "smina":
-        which_precalc_terms_to_keep[:24] = False
-    elif termtypes == "gaussian":
+    if termtypes == 'smina':
         which_precalc_terms_to_keep[24:] = False
+    elif termtypes == 'gaussian':
+        which_precalc_terms_to_keep[:24] = False
 
     num_terms_kept = np.sum(which_precalc_terms_to_keep == True)
-    print("Number of terms retained: " + str(num_terms_kept))
-    print("Number of terms removed: " + str(np.sum(to_keep == False)))
+    print("Number of terms retained: " + str(np.sum(which_precalc_terms_to_keep == True)))
+    print("Number of terms removed: " + str(np.sum(which_precalc_terms_to_keep == False)))
 
     return which_precalc_terms_to_keep
 
