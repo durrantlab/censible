@@ -23,6 +23,7 @@ params = {
     "step_size": 80,
     # "prefix": "crystal",
     "prefix": "randomsplit",
+    "termtypes": "all"
 }
 
 # Create argparser with same args as params
@@ -37,11 +38,11 @@ print(params)
 orig_dir = os.getcwd() + os.sep
 
 # change working directory to "./prepare_data/"
-os.chdir("./prepare_data/")
+os.chdir("./data/cen/")#os.chdir("./prepare_data/")
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
 # keeping, False otherwise. term_names is a list of all the term names.
-which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess()
+which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess(params["termtypes"])
 
 # This keeps only the smina terms (not gaussian terms)
 # which_precalc_terms_to_keep[24:] = False
@@ -88,6 +89,10 @@ with open(save_dir + "precalc_term_scale_factors.txt", "w") as f:
 with open(save_dir + "term_names.txt", "w") as f:
     f.write(str([term_names[i] for i in range(len(term_names)) if which_precalc_terms_to_keep[i]]))
 
+# Save weights and predictions
+np.save("weights_and_predictions.npy",coefs_predict_lst)
+np.save("predictions.npy",results)
+"""
 generate_graphs(
     save_dir,
     training_losses,
@@ -99,4 +104,4 @@ generate_graphs(
     which_precalc_terms_to_keep,
     term_names,
     params
-)
+)"""

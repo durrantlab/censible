@@ -4,7 +4,7 @@ import numpy as np
 
 RARE_TERM_RATIO_CUTOFF = 0.01
 
-def preprocess():
+def preprocess(termtypes):
     # Some atomic interactions are nonexistent or rare and should be ignored.
     # Calculate statistics for each term.
 
@@ -43,13 +43,14 @@ def preprocess():
     #     if allterms[1][t] != 0:
     #         print(str(t) + "  " + str(termnames[t]) + ": " + str(allterms[1][t]))
 
-    which_precalc_terms_to_keep = remove_rare_terms(all_terms)
+    which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes)
 
     precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
+    np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors)
 
     return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
 
-def remove_rare_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray = None):
+def remove_rare_terms(all_terms: np.ndarray, termtypes: str, which_precalc_terms_to_keep: np.ndarray = None):
     global RARE_TERM_RATIO_CUTOFF
 
     # If which_precalc_terms_to_keep is not provided, then it is calculated here. All trues.
@@ -68,6 +69,11 @@ def remove_rare_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.nda
     which_precalc_terms_to_keep = np.logical_and(
         which_precalc_terms_to_keep, to_keep
     )
+
+    if termtypes == "smina":
+        which_precalc_terms_to_keep[:24] = False
+    elif termtypes == "gaussian":
+        which_precalc_terms_to_keep[24:] = False
 
     num_terms_kept = np.sum(which_precalc_terms_to_keep == True)
     print("Number of terms retained: " + str(num_terms_kept))
@@ -108,5 +114,6 @@ def normalize_terms(all_terms, which_precalc_terms_to_keep):
 
     # Convert factors to a tensor
     precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float().to(device="cuda")
+    #precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float()
 
     return precalc_term_scale_factors
