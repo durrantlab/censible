@@ -16,22 +16,55 @@ from _preprocess import preprocess
 # import py3Dmol
 import os
 
-params = {
-    "epochs": 250, # 400,
-    "fold_num": 0,
-    "batch_size": 25,
-    "lr": 0.01,
-    "step_size": 80,
-    # "prefix": "crystal",
-    "prefix": "randomsplit",
-    "termtypes": "all",
-    "data_dir": "./prepare_data/"
-}
+params = [
+    {
+        "name": "epochs",
+        "val": 250, # 400,
+        "description": "Number of epochs to train for."
+    },
+    {
+        "name": "fold_num",
+        "val": 0,
+        "description": "Which fold to train on."
+    },
+    {
+        "name": "batch_size",
+        "val": 25,
+        "description": "Batch size."
+    },
+    {
+        "name": "lr",
+        "val": 0.01,
+        "description": "Learning rate."
+    },
+    {
+        "name": "step_size",
+        "val": 80,
+        "description": "Step size for learning rate decay."
+    },
+    {
+        "name": "prefix",
+        "val": "randomsplit",
+        "description": "Prefix for the output files."  # TODO: Correct description?
+    },
+    {
+        "name": "termtypes",
+        "val": "all",
+        "description": "Which terms to use. Can be 'all', 'smina', or 'gaussian'."
+    },
+    {
+        "name": "data_dir",
+        "val": "./prepare_data/",
+        "description": "Directory where the data is stored."
+    },
+]
+# "prefix": "crystal",
 
 # Create argparser with same args as params
 parser = argparse.ArgumentParser()
-for key, value in params.items():
-    parser.add_argument("--" + key, type=type(value), default=value)
+for value in params:
+    # parser.add_argument("--" + key, type=type(value), default=value)
+    parser.add_argument("--" + value["name"], type=type(value["val"]), default=value["val"], help=value["description"])
 args = parser.parse_args()
 params = vars(args)
 
