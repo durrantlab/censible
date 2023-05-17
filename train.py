@@ -1,5 +1,6 @@
 from _training import train_single_fold
 from _graphs import generate_graphs
+import numpy as np
 import json
 import argparse
 import torch
@@ -23,6 +24,8 @@ params = {
     "step_size": 80,
     # "prefix": "crystal",
     "prefix": "randomsplit",
+    "termtypes": "all",
+    "data_dir": "./prepare_data/"
 }
 
 # Create argparser with same args as params
@@ -37,12 +40,13 @@ print(params)
 orig_dir = os.getcwd() + os.sep
 
 # change working directory to "./prepare_data/"
-os.chdir("./prepare_data/")
+os.chdir(params["data_dir"])
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
 # keeping, False otherwise. term_names is a list of all the term names.
-which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess()
+which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess(params["termtypes"])
 
+print('Preprocessing done.')
 # This keeps only the smina terms (not gaussian terms)
 # which_precalc_terms_to_keep[24:] = False
 
@@ -87,6 +91,10 @@ with open(save_dir + "precalc_term_scale_factors.txt", "w") as f:
     f.write(str(precalc_term_scale_factors_updated))
 with open(save_dir + "term_names.txt", "w") as f:
     f.write(str([term_names[i] for i in range(len(term_names)) if which_precalc_terms_to_keep[i]]))
+
+# Save weights and predictions
+np.save("weights_and_predictions.npy",np.hstack([np.array(coefs_predict_lst).squeeze(),results[:,None]]))
+#np.save("predictions.npy",results)
 
 generate_graphs(
     save_dir,
