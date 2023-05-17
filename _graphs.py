@@ -6,13 +6,23 @@ import datetime
 import json
 
 def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir):
-    plt.clf()
-    NUM_EXAMPLES_TO_PICK = 100
-    np.random.shuffle(coefs_predict_lst)
-    ccweights = np.array(coefs_predict_lst[:NUM_EXAMPLES_TO_PICK])
-    num_terms_kept = np.sum(which_precalc_terms_to_keep == True)
-    ccweights = np.reshape(ccweights, (NUM_EXAMPLES_TO_PICK, num_terms_kept))
+    # Save all weights
     header = [h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]]
+    ccweights = np.array(coefs_predict_lst)
+    ccweights = np.reshape(ccweights, (ccweights.shape[0], -1))
+
+    # Save ccweights to csv file, using the values in header as the column names
+    np.savetxt(
+        save_dir + "weights.csv",
+        ccweights,
+        delimiter=",",
+        header=",".join(header),
+        fmt="%.8f",
+    )
+
+    NUM_EXAMPLES_TO_PICK = 100
+    np.random.shuffle(ccweights)
+    ccweights = ccweights[:NUM_EXAMPLES_TO_PICK]
 
     # Save ccweights to csv file, using the values in header as the column names
     np.savetxt(
@@ -31,20 +41,31 @@ def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, 
     # span_col = np.max(ccweights, axis=0) - min_col
     # ccweights = (ccweights - min_col) / span_col
 
+    plt.clf()
     sns.heatmap(ccweights)
     plt.xlabel("Weights")
     plt.ylabel("Prot/Lig Complexes")
     plt.savefig(save_dir + "a_few_weights.png")
 
 def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir):
-
-    plt.clf()
-    NUM_EXAMPLES_TO_PICK = 100
-    np.random.shuffle(contributions_lst)
-    contribs = np.array(contributions_lst[:NUM_EXAMPLES_TO_PICK])
-    num_terms_kept = np.sum(goodfeatures == True)
-    contribs = np.reshape(contribs, (NUM_EXAMPLES_TO_PICK, num_terms_kept))
+    # save all contributions
     header = [h.replace(",", "_") for h in termnames[goodfeatures]]
+
+    # Save ccweights to csv file, using the values in header as the column names
+    contribs = np.array(contributions_lst)
+    contribs = np.reshape(contribs, (contribs.shape[0], -1))
+    
+    np.savetxt(
+        save_dir + "contributions.csv",
+        contribs,
+        delimiter=",",
+        header=",".join(header),
+        fmt="%.8f",
+    )
+
+    NUM_EXAMPLES_TO_PICK = 100
+    np.random.shuffle(contribs)
+    contribs = contribs[:NUM_EXAMPLES_TO_PICK]
 
     # Save ccweights to csv file, using the values in header as the column names
     np.savetxt(
@@ -55,6 +76,7 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir)
         fmt="%.8f",
     )
 
+    plt.clf()
     sns.heatmap(contribs)
     plt.xlabel("Contributions")
     plt.ylabel("Prot/Lig Complexes")

@@ -45,7 +45,7 @@ params = [
     {
         "name": "prefix",
         "val": "randomsplit",
-        "description": "Prefix for the output files."  # TODO: Correct description?
+        "description": "Prefix for the input types files."  # TODO: Correct description?
     },
     {
         "name": "termtypes",
@@ -64,7 +64,11 @@ params = [
 parser = argparse.ArgumentParser()
 for value in params:
     # parser.add_argument("--" + key, type=type(value), default=value)
-    parser.add_argument("--" + value["name"], type=type(value["val"]), default=value["val"], help=value["description"])
+    parser.add_argument(
+        "--" + value["name"], type=type(value["val"]), 
+        default=value["val"], 
+        help=value["description"] + " Default: " + str(value["val"])
+    )
 args = parser.parse_args()
 params = vars(args)
 
