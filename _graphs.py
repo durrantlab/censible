@@ -95,6 +95,8 @@ def generate_graphs(
     termnames,
     params
 ):
+    print("STOP")
+    import pdb; pdb.set_trace()
     # Losses per batch
     plt.plot(losses)
     plt.plot(

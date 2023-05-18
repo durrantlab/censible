@@ -75,7 +75,6 @@ def remove_rare_terms(all_terms: np.ndarray, termtypes: str, which_precalc_terms
     elif termtypes == 'gaussian':
         which_precalc_terms_to_keep[:24] = False
 
-    num_terms_kept = np.sum(which_precalc_terms_to_keep == True)
     print("Number of terms retained: " + str(np.sum(which_precalc_terms_to_keep == True)))
     print("Number of terms removed: " + str(np.sum(which_precalc_terms_to_keep == False)))
 
