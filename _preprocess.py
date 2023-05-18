@@ -1,3 +1,4 @@
+from typing import List
 import molgrid
 import torch
 import numpy as np
@@ -8,13 +9,13 @@ def preprocess(termtypes):
     # Some atomic interactions are nonexistent or rare and should be ignored.
     # Calculate statistics for each term.
 
-    # Get the names of all the terms
+    # Get the names of all the terms. NOTE: You can't use allterms.txt for this,
+    # because smina reorders the terms when it creates the vector for each
+    # protein/ligand complex. So strange.
     term_names = []
-    for line in open("allterms.txt"):
+    for line in open("smina_ordered_terms.txt"):
         line = line.rstrip()
-        if line:
-            # I accidentally left a blank line in the middle of the file
-            term_names.append(line.split()[1])
+        term_names.append(line)
     term_names = np.array(term_names)
 
     # Get all examples (grids). These aren't used for training in the end. Just
@@ -45,14 +46,14 @@ def preprocess(termtypes):
     #     if allterms[1][t] != 0:
     #         print(str(t) + "  " + str(termnames[t]) + ": " + str(allterms[1][t]))
 
-    which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes)
+    which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
 
     precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
     np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors.cpu())
 
     return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
 
-def remove_rare_terms(all_terms: np.ndarray, termtypes: str, which_precalc_terms_to_keep: np.ndarray = None):
+def remove_rare_terms(all_terms: np.ndarray, termtypes: str, term_names: List[str], which_precalc_terms_to_keep: np.ndarray = None):
     global RARE_TERM_RATIO_CUTOFF
 
     # If which_precalc_terms_to_keep is not provided, then it is calculated here. All trues.
@@ -72,10 +73,20 @@ def remove_rare_terms(all_terms: np.ndarray, termtypes: str, which_precalc_terms
         which_precalc_terms_to_keep, to_keep
     )
 
+    # It seems ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8) is included twice.
+    # Let's turn off the second instance. Hackish.
+    idx = np.array([i for i in range(len(term_names)) if "ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8)" in term_names[i]])
+    assert len(idx) == 2
+    which_precalc_terms_to_keep[idx[-1]] = False
+
     if termtypes == 'smina':
-        which_precalc_terms_to_keep[24:] = False
+        # Get the indexes of the term_names that contain the string "atom_type_gaussian"
+        idx = np.array([i for i in range(len(term_names)) if "atom_type_gaussian" in term_names[i]])
+        which_precalc_terms_to_keep[idx] = False
     elif termtypes == 'gaussian':
-        which_precalc_terms_to_keep[:24] = False
+        # Get the indexes of the term_names that do not contain the string "atom_type_gaussian"
+        idx = np.array([i for i in range(len(term_names)) if "atom_type_gaussian" not in term_names[i]])
+        which_precalc_terms_to_keep[idx] = False
 
     print("Number of terms retained: " + str(np.sum(which_precalc_terms_to_keep == True)))
     print("Number of terms removed: " + str(np.sum(which_precalc_terms_to_keep == False)))

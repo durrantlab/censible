@@ -12,3 +12,5 @@ cache/
 1.pdbbind2020/
 *.old
 *.types
+
+*.npy

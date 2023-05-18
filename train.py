@@ -72,6 +72,10 @@ for value in params:
 args = parser.parse_args()
 params = vars(args)
 
+# Make sure termtypes is valid
+if params["termtypes"] not in ["all", "smina", "gaussian"]:
+    raise ValueError("termtypes must be 'all', 'smina', or 'gaussian'")
+
 print(params)
 
 orig_dir = os.getcwd() + os.sep
@@ -86,15 +90,13 @@ which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess
 )
 
 print('Preprocessing done.')
-# This keeps only the smina terms (not gaussian terms)
-# which_precalc_terms_to_keep[24:] = False
 
 # Train the model
 (
     model,
     test_labels,
     test_results,
-    test_gninatypes_filenames,
+    gninatypes_filenames,
     test_mses,
     test_ames,
     test_pearsons,
@@ -141,7 +143,7 @@ generate_graphs(
     training_losses,
     test_labels,
     test_results,
-    test_gninatypes_filenames,
+    gninatypes_filenames,
     test_pearsons,
     test_coefs_predict_lst,
     test_weighted_terms_lst,
