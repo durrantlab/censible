@@ -81,7 +81,9 @@ os.chdir(params["data_dir"])
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
 # keeping, False otherwise. term_names is a list of all the term names.
-which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess(params["termtypes"])
+which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess(
+    params["termtypes"]
+)
 
 print('Preprocessing done.')
 # This keeps only the smina terms (not gaussian terms)
@@ -90,14 +92,15 @@ print('Preprocessing done.')
 # Train the model
 (
     model,
-    tmp_labels,
-    results,
+    test_labels,
+    test_results,
+    test_gninatypes_filenames,
     test_mses,
-    ames,
-    pearsons,
+    test_ames,
+    test_pearsons,
     training_losses,
-    coefs_predict_lst,
-    contributions_lst,
+    test_coefs_predict_lst,
+    test_weighted_terms_lst,
     which_precalc_terms_to_keep,
     precalc_term_scale_factors_updated
 ) = train_single_fold(
@@ -130,17 +133,18 @@ with open(save_dir + "term_names.txt", "w") as f:
     f.write(str([term_names[i] for i in range(len(term_names)) if which_precalc_terms_to_keep[i]]))
 
 # Save weights and predictions
-np.save("weights_and_predictions.npy",np.hstack([np.array(coefs_predict_lst).squeeze(),results[:,None]]))
+np.save("weights_and_predictions.npy",np.hstack([np.array(test_coefs_predict_lst).squeeze(),test_results[:,None]]))
 #np.save("predictions.npy",results)
 
 generate_graphs(
     save_dir,
     training_losses,
-    tmp_labels,
-    results,
-    pearsons,
-    coefs_predict_lst,
-    contributions_lst,
+    test_labels,
+    test_results,
+    test_gninatypes_filenames,
+    test_pearsons,
+    test_coefs_predict_lst,
+    test_weighted_terms_lst,
     which_precalc_terms_to_keep,
     term_names,
     params

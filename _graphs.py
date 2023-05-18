@@ -4,36 +4,37 @@ import seaborn as sns
 import os
 import datetime
 import json
+import csv
 
-def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir):
+def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir, test_gninatypes_filenames):
     # Save all weights
-    header = [h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]]
+    header = ["protein_gnina_types", "ligand_gnina_types"] + [h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]]
     ccweights = np.array(coefs_predict_lst)
-    ccweights = np.reshape(ccweights, (ccweights.shape[0], -1))
+    ccweights = np.reshape(ccweights, (ccweights.shape[0], -1)).tolist()
 
+    # Now add back in filenames to each item
+    for i in range(len(ccweights)):
+        ccweights[i].insert(0, test_gninatypes_filenames[i][1])
+        ccweights[i].insert(0, test_gninatypes_filenames[i][0])
+    
     # Save ccweights to csv file, using the values in header as the column names
-    np.savetxt(
-        save_dir + "weights.csv",
-        ccweights,
-        delimiter=",",
-        header=",".join(header),
-        fmt="%.8f",
-    )
+    with open(save_dir + "weights.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(ccweights)
 
     NUM_EXAMPLES_TO_PICK = 100
     np.random.shuffle(ccweights)
     ccweights = ccweights[:NUM_EXAMPLES_TO_PICK]
 
     # Save ccweights to csv file, using the values in header as the column names
-    np.savetxt(
-        save_dir + "a_few_weights.csv",
-        ccweights,
-        delimiter=",",
-        header=",".join(header),
-        fmt="%.8f",
-    )
+    with open(save_dir + "a_few_weights.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(ccweights)
 
     # Scale the columns of the ccweights so that they are z scores
+    ccweights = np.array([ccweights[i][2:] for i in range(len(ccweights))])
     ccweights = (ccweights - ccweights.mean(axis=0)) / ccweights.std(axis=0)
 
     # Scale the columns of ccweights so they go from 0 to 1
@@ -47,34 +48,49 @@ def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, 
     plt.ylabel("Prot/Lig Complexes")
     plt.savefig(save_dir + "a_few_weights.png")
 
-def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir):
+def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir, test_gninatypes_filenames):
     # save all contributions
-    header = [h.replace(",", "_") for h in termnames[goodfeatures]]
+    header = ["protein_gnina_types", "ligand_gnina_types"] + [h.replace(",", "_") for h in termnames[goodfeatures]]
 
     # Save ccweights to csv file, using the values in header as the column names
     contribs = np.array(contributions_lst)
-    contribs = np.reshape(contribs, (contribs.shape[0], -1))
+    contribs = np.reshape(contribs, (contribs.shape[0], -1)).tolist()
+
+    # Now add back in filenames to each item
+    for i in range(len(contribs)):
+        contribs[i].insert(0, test_gninatypes_filenames[i][1])
+        contribs[i].insert(0, test_gninatypes_filenames[i][0])
     
-    np.savetxt(
-        save_dir + "contributions.csv",
-        contribs,
-        delimiter=",",
-        header=",".join(header),
-        fmt="%.8f",
-    )
+    # np.savetxt(
+    #     save_dir + "contributions.csv",
+    #     contribs,
+    #     delimiter=",",
+    #     header=",".join(header),
+    #     fmt="%.8f",
+    # )
+    with open(save_dir + "contributions.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(contribs)
 
     NUM_EXAMPLES_TO_PICK = 100
     np.random.shuffle(contribs)
     contribs = contribs[:NUM_EXAMPLES_TO_PICK]
 
     # Save ccweights to csv file, using the values in header as the column names
-    np.savetxt(
-        save_dir + "a_few_contributions.csv",
-        contribs,
-        delimiter=",",
-        header=",".join(header),
-        fmt="%.8f",
-    )
+    # np.savetxt(
+    #     save_dir + "a_few_contributions.csv",
+    #     contribs,
+    #     delimiter=",",
+    #     header=",".join(header),
+    #     fmt="%.8f",
+    # )
+    with open(save_dir + "a_few_contributions.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(contribs)
+
+    contribs = np.array([contribs[i][2:] for i in range(len(contribs))])
 
     plt.clf()
     sns.heatmap(contribs)
@@ -86,8 +102,9 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir)
 def generate_graphs(
     save_dir,
     losses,
-    labels,
-    results,
+    labels,  # Numeric labels
+    results,  # Predictions
+    test_gninatypes_filenames,
     pearsons,
     coefs_predict_lst,
     contributions_lst,
@@ -95,8 +112,6 @@ def generate_graphs(
     termnames,
     params
 ):
-    print("STOP")
-    import pdb; pdb.set_trace()
     # Losses per batch
     plt.plot(losses)
     plt.plot(
@@ -120,9 +135,9 @@ def generate_graphs(
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
-    _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir)
+    _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir, test_gninatypes_filenames)
 
-    _contributions_heatmap(contributions_lst, which_precalc_terms_to_keep, termnames, save_dir)
+    _contributions_heatmap(contributions_lst, which_precalc_terms_to_keep, termnames, save_dir, test_gninatypes_filenames)
 
     # Save params as json
     with open(save_dir + "params.json", "w") as f:

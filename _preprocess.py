@@ -17,7 +17,9 @@ def preprocess(termtypes):
             term_names.append(line.split()[1])
     term_names = np.array(term_names)
 
-    # Get all examples (grids)
+    # Get all examples (grids). These aren't used for training in the end. Just
+    # used here to get the terms, scale factors, etc. The are reloaded in
+    # _training.py.
     all_examples = molgrid.ExampleProvider(
         ligmolcache="lig.molcache2",
         recmolcache="rec.molcache2",
@@ -27,16 +29,16 @@ def preprocess(termtypes):
     all_examples.populate("all_cen.types")
 
     # Get the experimentally measured affinities as well as the other terms.
-    all_affinities = []
+    # all_affinities = []  # NOTE: Affinity not used here. Data reloaded (per fold) in _training.py.
     all_terms = []
     for batch in all_examples:
-        example = batch[0]  # batch size on
-        affinity = example.labels[0]
-        terms = np.array(example.labels[1:])
-        all_affinities.append(affinity)
+        example = batch[0]  # batch size one
+        # affinity = example.labels[0]
+        # all_affinities.append(affinity)
+        terms = np.array(example.labels[1:])  # Not affinity
         all_terms.append(terms)
 
-    all_affinities = np.array(all_affinities)
+    # all_affinities = np.array(all_affinities)
     all_terms = np.array(all_terms)
 
     # for t in range(349):

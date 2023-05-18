@@ -9,6 +9,49 @@ import torch.nn.functional as F
 from torch.nn import init
 from _preprocess import remove_rare_terms
 
+def load_split(types_filename: str, batch_size: int, is_training_set: bool = False):
+    # You need to keep track of the ligand and receptor filenames
+    if not is_training_set:
+        # It's a testing set, so there will be no shuffle. Keep track of the
+        # gninatypes filenames for reporting.
+        gninatypes_filenames = []
+        with open(types_filename, "r") as f:
+            for line in f:
+                receptor_file, ligand_file = line.strip().split()[-2:]
+                gninatypes_filenames.append((receptor_file, ligand_file))
+    else:
+        # Testing set. So there will be a shuffle. No point in keeping track of
+        # ordered gninatypes filenames.
+        gninatypes_filenames = None
+
+    kwargs = {
+        "ligmolcache": "lig.molcache2",
+        "recmolcache": "rec.molcache2",
+        "iteration_scheme": molgrid.IterationScheme.LargeEpoch
+    }
+
+    if is_training_set:
+        # It's a training set. Shuffle.
+        kwargs["shuffle"] = True
+        kwargs["default_batch_size"] = batch_size
+        kwargs["stratify_min"] = 3  # TODO: What do these mean?
+        kwargs["stratify_max"] = 10
+        kwargs["stratify_step"] = 1
+        kwargs["stratify_pos"] = 0
+    else:
+        # It's a testing set. No shuffling.
+        kwargs["default_batch_size"] = 1
+
+    # Create a training dataset, which has access to all receptor and ligand grids.
+    dataset = molgrid.ExampleProvider(**kwargs)
+
+    # Indicate that the training set will only use those grids in a given file,
+    # not all grids.
+    dataset.populate(types_filename)
+    # train_dataset.populate("all_cen.types")
+
+    return dataset, gninatypes_filenames
+
 def train_single_fold(
     Net,
     which_precalc_terms_to_keep,
@@ -22,32 +65,43 @@ def train_single_fold(
     gmaker = molgrid.GridMaker()  # use defaults
 
     # Create a training dataset, which has access to all receptor and ligand grids.
-    train_dataset = molgrid.ExampleProvider(
-        ligmolcache="lig.molcache2",
-        recmolcache="rec.molcache2",
-        shuffle=True,
-        iteration_scheme=molgrid.IterationScheme.LargeEpoch,
-        # default_batch_size=1
-        default_batch_size=params["batch_size"],
-        stratify_min=3,  # TODO: What do these mean?
-        stratify_max=10,
-        stratify_step=1,
-        stratify_pos=0,
-    )
+    # train_dataset = molgrid.ExampleProvider(
+    #     ligmolcache="lig.molcache2",
+    #     recmolcache="rec.molcache2",
+    #     iteration_scheme=molgrid.IterationScheme.LargeEpoch,
+    #     shuffle=True,
+    #     # default_batch_size=1
+    #     default_batch_size=params["batch_size"],
+    #     stratify_min=3,  # TODO: What do these mean?
+    #     stratify_max=10,
+    #     stratify_step=1,
+    #     stratify_pos=0,
+    # )
 
     # Indicate that the training set will only use those grids in a given file,
     # not all grids.
-    train_dataset.populate(params["prefix"] + ("train%d_cen.types" % params["fold_num"]))
-    # train_dataset.populate("all_cen.types")
+    # train_dataset.populate(params["prefix"] + ("train%d_cen.types" % params["fold_num"]))
+    ## train_dataset.populate("all_cen.types")
+
+    train_dataset, _ = load_split(
+        params["prefix"] + ("train%d_cen.types" % params["fold_num"]),
+        params["batch_size"],
+        is_training_set=True
+    )
 
     # Similarly create a testing dataset.
-    test_dataset = molgrid.ExampleProvider(
-        ligmolcache="lig.molcache2",
-        recmolcache="rec.molcache2",
-        iteration_scheme=molgrid.IterationScheme.LargeEpoch,
-        default_batch_size=1,
+    # test_dataset = molgrid.ExampleProvider(
+    #     ligmolcache="lig.molcache2",
+    #     recmolcache="rec.molcache2",
+    #     iteration_scheme=molgrid.IterationScheme.LargeEpoch,
+    #     default_batch_size=1,
+    # )
+    # test_dataset.populate(params["prefix"] + ("test%d_cen.types" % params["fold_num"]))
+    test_dataset, test_gninatypes_filenames = load_split(
+        params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
+        1,
+        is_training_set=False
     )
-    test_dataset.populate(params["prefix"] + ("test%d_cen.types" % params["fold_num"]))
 
     # Note that alllabels doesn't contain all the labels, but is simply a tensor
     # where a given batch's labels will be placed.
@@ -198,6 +252,7 @@ def train_single_fold(
         model,
         test_labels,
         test_results,
+        test_gninatypes_filenames,
         test_mses,
         test_ames,
         test_pearsons,
