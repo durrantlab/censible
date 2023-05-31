@@ -139,7 +139,8 @@ def train_single_fold(
     nterms = np.count_nonzero(which_precalc_terms_to_keep)
     model = Net(dims, nterms).to("cuda")
     model.apply(weights_init)
-
+    print(dims)
+    print(nterms)
     # Setup optimizer and scheduler for training.
     optimizer = optim.SGD(model.parameters(), lr=params["lr"], weight_decay=0.0001, momentum=0.9)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params["step_size"], gamma=0.1)

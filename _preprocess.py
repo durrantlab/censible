@@ -50,7 +50,7 @@ def preprocess(termtypes):
 
     precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
     np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors.cpu())
-
+    np.save('terms_to_keep.npy',which_precalc_terms_to_keep)
     return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
 
 def remove_rare_terms(all_terms: np.ndarray, termtypes: str, term_names: List[str], which_precalc_terms_to_keep: np.ndarray = None):
