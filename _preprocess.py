@@ -73,8 +73,8 @@ def remove_rare_terms(all_terms: np.ndarray, termtypes: str, term_names: List[st
         which_precalc_terms_to_keep, to_keep
     )
 
-    # It seems ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8) is included twice.
-    # Let's turn off the second instance. Hackish.
+    # It seems ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8) was accidentally
+    # included twice. Let's turn off the second instance. Hackish.
     idx = np.array([i for i in range(len(term_names)) if "ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8)" in term_names[i]])
     assert len(idx) == 2
     which_precalc_terms_to_keep[idx[-1]] = False
