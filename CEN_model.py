@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+
 # from _debug import grid_channel_to_xyz_file
 import torch.nn as nn
 import torch.nn.functional as F
@@ -77,5 +78,5 @@ class CENet(nn.Module):
                 precalculated_terms.view(batch_size, num_terms, 1),
             ),
             coef_predict,
-            weighted_terms
+            weighted_terms,
         )

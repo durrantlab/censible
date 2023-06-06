@@ -6,9 +6,18 @@ import datetime
 import json
 import csv
 
-def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir, gninatypes_filenames):
+
+def _weights_heatmap(
+    coefs_predict_lst,
+    which_precalc_terms_to_keep,
+    termnames,
+    save_dir,
+    gninatypes_filenames,
+):
     # Save all weights
-    header = ["protein_gnina_types", "ligand_gnina_types"] + [h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]]
+    header = ["protein_gnina_types", "ligand_gnina_types"] + [
+        h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]
+    ]
     ccweights = np.array(coefs_predict_lst)
     ccweights = np.reshape(ccweights, (ccweights.shape[0], -1)).tolist()
 
@@ -16,7 +25,7 @@ def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, 
     for i in range(len(ccweights)):
         ccweights[i].insert(0, gninatypes_filenames[i][1])
         ccweights[i].insert(0, gninatypes_filenames[i][0])
-    
+
     # Save ccweights to csv file, using the values in header as the column names
     with open(save_dir + "weights.csv", "w") as f:
         writer = csv.writer(f)
@@ -48,9 +57,14 @@ def _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, 
     plt.ylabel("Prot/Lig Complexes")
     plt.savefig(save_dir + "a_few_weights.png")
 
-def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir, gninatypes_filenames):
+
+def _contributions_heatmap(
+    contributions_lst, goodfeatures, termnames, save_dir, gninatypes_filenames
+):
     # save all contributions
-    header = ["protein_gnina_types", "ligand_gnina_types"] + [h.replace(",", "_") for h in termnames[goodfeatures]]
+    header = ["protein_gnina_types", "ligand_gnina_types"] + [
+        h.replace(",", "_") for h in termnames[goodfeatures]
+    ]
 
     # Save ccweights to csv file, using the values in header as the column names
     contribs = np.array(contributions_lst)
@@ -60,7 +74,7 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir,
     for i in range(len(contribs)):
         contribs[i].insert(0, gninatypes_filenames[i][1])
         contribs[i].insert(0, gninatypes_filenames[i][0])
-    
+
     with open(save_dir + "contributions.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(header)
@@ -85,7 +99,7 @@ def _contributions_heatmap(contributions_lst, goodfeatures, termnames, save_dir,
     plt.savefig(save_dir + "a_few_contributions.png")
 
 
-def generate_graphs(
+def generate_outputs(
     save_dir,
     losses,
     labels,  # Numeric labels
@@ -96,7 +110,7 @@ def generate_graphs(
     contributions_lst,
     which_precalc_terms_to_keep,
     termnames,
-    params
+    params,
 ):
     # Losses per batch
     plt.plot(losses)
@@ -121,9 +135,21 @@ def generate_graphs(
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
-    _weights_heatmap(coefs_predict_lst, which_precalc_terms_to_keep, termnames, save_dir, gninatypes_filenames)
+    _weights_heatmap(
+        coefs_predict_lst,
+        which_precalc_terms_to_keep,
+        termnames,
+        save_dir,
+        gninatypes_filenames,
+    )
 
-    _contributions_heatmap(contributions_lst, which_precalc_terms_to_keep, termnames, save_dir, gninatypes_filenames)
+    _contributions_heatmap(
+        contributions_lst,
+        which_precalc_terms_to_keep,
+        termnames,
+        save_dir,
+        gninatypes_filenames,
+    )
 
     # Save params as json
     with open(save_dir + "params.json", "w") as f:
@@ -135,5 +161,3 @@ def generate_graphs(
 
     # Save pearsons as csv
     np.savetxt(save_dir + "pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
-    
-
