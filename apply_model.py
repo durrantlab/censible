@@ -9,9 +9,6 @@ import subprocess
 
 from CEN_model import CENet
 
-# global termset dict -- defined by whoever trained the model (us)
-term_sizes = {"all": 123, "smina": 21, "gaussian": 102}
-
 
 def load_example(lig_datapath, rec_datapath, terms_file, norm_factors_file, smina_exec_path):
     ### get the single_example_terms -- one set of smina computed terms
@@ -53,20 +50,18 @@ def load_example(lig_datapath, rec_datapath, terms_file, norm_factors_file, smin
     # all_smina_computed_terms_str = np.fromstring(all_smina_computed_terms_str, sep=" ")
 
     example = molgrid.ExampleProvider(
+        # data_root can be any directory, I think.
         data_root="./", default_batch_size=1
     )
     example.populate(smina_outfile)
-
-    import pdb; pdb.set_trace()
 
     return (example, which_precalc_terms, norm_factors_to_keep)
 
 
 # load in model -- from torch
-def load_model(modelpath, termset):
+def load_model(modelpath, num_terms):
     dims = (28, 48, 48, 48)
-    terms = term_sizes[termset]
-    model = CENet(dims, terms)
+    model = CENet(dims, num_terms)
     model.load_state_dict(torch.load(modelpath))
     model.eval()
 
@@ -75,34 +70,46 @@ def load_model(modelpath, termset):
 
 # apply model to test data
 def test_apply(example_data, which_precalc_terms_to_keep, norm_factors, model):
+    # Get the number of terms to keep.
+    # num_terms_to_keep = len(norm_factors)
+
     gm = molgrid.GridMaker()
     norm_factors = torch.from_numpy(norm_factors).to("cuda")
     which_precalc_terms_to_keep = torch.from_numpy(which_precalc_terms_to_keep).to(
         "cuda"
     )
 
-    single_label_for_testing = torch.zeros(
+    # Create tensors to store the precalculated terms and the input voxels.
+    all_precalc_terms = torch.zeros(
         (1, example_data.num_labels()), dtype=torch.float32, device="cuda"
     )
-    single_input_for_testing = torch.zeros(
+    input_voxel = torch.zeros(
         (1,) + (28, 48, 48, 48), dtype=torch.float32, device="cuda"
     )
 
+    # Get this batch (just one example)
     test_batch = example_data.next_batch()
-    # Get this batch's labels
-    test_batch.extract_labels(single_label_for_testing)
 
-    # Populate the single_input_for_testing tensor with an example.
-    gm.forward(test_batch, single_input_for_testing)
+    # Get this batch's labels and put them in all_precalc_terms. This is all labels,
+    # not just the one's you'll use.
+    test_batch.extract_labels(all_precalc_terms)
+
+    # Now get only those precalculated terms you'll use.
+    precalc_terms_to_use = all_precalc_terms[:, :][:, which_precalc_terms_to_keep]
+
+    # Populate the input_voxel tensor with the one example.
+    gm.forward(test_batch, input_voxel)
 
     model.to("cuda")
 
     print("running model to predict")
+
     # Run that through the model.
     output, coef_predict, weighted_terms = model(
-        single_input_for_testing,
-        single_label_for_testing[:, :][:, which_precalc_terms_to_keep] * norm_factors,
+        input_voxel,
+        precalc_terms_to_use * norm_factors,
     )
+
     return (output, coef_predict, weighted_terms)
 
 
@@ -161,8 +168,10 @@ args = get_cmd_args()
 example, which_precalc_terms_to_keep, norm_factors = load_example(
     args.ligpath, args.recpath, args.terms_file, args.norm_factors_file, args.smina_exec_path
 )
+
 # load the model
-model = load_model(args.modelpath, args.term_set)
+model = load_model(args.modelpath, len(norm_factors))
+
 print("data and model loaded.")
 prediction, coef_predictions, weighted_ind_terms = test_apply(
     example, which_precalc_terms_to_keep, norm_factors, model
@@ -176,6 +185,8 @@ if args.out_prefix == "":
         + "_"
         + args.recpath.split("/")[-1].split(".")[-2]
     )
+else:
+    prefix = args.out_prefix
 
 np.savetxt(f"{prefix}_coeffs.txt", coef_predictions.cpu().detach().numpy())
 np.savetxt(f"{prefix}_weighted.txt", weighted_ind_terms.cpu().detach().numpy())
