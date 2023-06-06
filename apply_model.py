@@ -13,24 +13,58 @@ term_sizes = {'all': 123,
                 'smina': 21,
                 'gaussian': 102}
 
+def load_data_file(filename: str, dtype=np.bool_):
+    # If it ends in npy, load it via numpy.
+    if filename.endswith(".npy"):
+        return np.load(filename)
+    
+    # # It must be a csv file.
+    # with open(filename, "r") as f:
+    #     txt = f.read()
+    #     txt = txt.replace("\n", " ")
+    #     while "  " in txt:
+    #         txt = txt.replace("  ", " ")
+    #     txt = txt.replace("[ ", "[").replace(" ]", "]")
+    #     txt = txt.replace(" ", ",")
+    #     txt = txt.replace("True", "true").replace("False", "false")
+    #     txt = txt.replace("tensor(", "")
+    #     txt = txt.split(",device=")[0]
+    #     while ",," in txt:
+    #         txt = txt.replace(",,", ",")
+    #     txt = txt.replace("],", "]")
+        
+    #     data = json.loads(txt)
+    # return np.array(data, dtype=dtype)
+
 def load_example(lig_datapath, rec_datapath, terms_file, norm_factors_file):
     ### get the single_example_terms -- one set of smina computed terms 
     # load normalization term data
-    terms_to_keep = np.load(terms_file)
-    norm_factors = np.load(norm_factors_file)[terms_to_keep]
+    terms_to_keep = load_data_file(terms_file, dtype=np.bool_)
+    import pdb; pdb.set_trace()
+    norm_factors = load_data_file(norm_factors_file, float)[terms_to_keep]
 
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
-    smina_out = str(subprocess.check_output('../../smina --custom_scoring smina_ordered_terms.txt --score_only -r %s -l %s'%(rec_datapath,lig_datapath),shell=True))
-   
+    smina_out = str(
+        subprocess.check_output(
+            f'../../smina --custom_scoring smina_ordered_terms.txt --score_only -r {rec_datapath} -l {lig_datapath}',
+            shell=True,
+        )
+    )
+
     pf = lig_datapath.split('.')[-2].split('/')[-1]
     smina_computed_terms = smina_out[smina_out.find(pf):smina_out.find('\\nRefine time')][(len(pf)+1):]
-    
+
     smina_outfile = 'types_file_cen.txt'
     with open(smina_outfile,'w') as smina_out_f:
-        smina_out_f.write(smina_computed_terms+' '+rec_datapath.split('a/')[-1]+' '+lig_datapath.split('a/')[-1])
+        smina_out_f.write(
+            f'{smina_computed_terms} '
+            + rec_datapath.split('a/')[-1]
+            + ' '
+            + lig_datapath.split('a/')[-1]
+        )
     smina_computed_terms = np.fromstring(smina_computed_terms,sep=' ')
-    
+
     example = molgrid.ExampleProvider(data_root='../PDBbind16_data/full_data/',default_batch_size=1)
     example.populate(smina_outfile)
 
@@ -78,16 +112,15 @@ def test_apply(example_data,terms_to_keep,norm_factors,model):
 def get_cmd_args():
     # Create argparser 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ligpath",required=True)
-    parser.add_argument("--recpath",required=True)
-    parser.add_argument("--modelpath",default='model.pt')
-    parser.add_argument("--term_set",default='all')
-    parser.add_argument("--terms_file",default='terms_to_keep.npy')
-    parser.add_argument("--norm_factors_file",default='all_normalization_factors.npy')
-    parser.add_argument("--out_prefix",default='')
+    parser.add_argument("--ligpath",required=True,help="path to the ligand")
+    parser.add_argument("--recpath",required=True,help="path to the receptor")
+    parser.add_argument("--modelpath",default='model.pt',help="path to the trained model (e.g., model.pt)")
+    parser.add_argument("--term_set",default='all',help="the terms to use: all, smina, gaussian")
+    parser.add_argument("--terms_file",default='terms_to_keep.npy',help="The terms-to-keep file (npy)")
+    parser.add_argument("--norm_factors_file",default='all_normalization_factors.npy',help="the normalization factors file (npy)")
+    parser.add_argument("--out_prefix",default='',help="prefix to use for saving")
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 def test_run():
     l = '../PDBbind16_data/full_data/2r0h/2r0h_ligand.sdf'
@@ -112,17 +145,13 @@ model = load_model(args.modelpath,args.term_set)
 print('data and model loaded.')
 prediction, coef_predictions, weighted_ind_terms = test_apply(example,terms_to_keep,norm_factors,model)
 
-print("Affinity prediction: "+str(round(float(prediction),5)))
+print(f"Affinity prediction: {str(round(float(prediction), 5))}")
 
 if args.out_prefix == '':
     prefix = args.ligpath.split('/')[-1].split('.')[-2]+'_'+args.recpath.split('/')[-1].split('.')[-2]
 
-np.savetxt(prefix+'_coeffs.txt',coef_predictions.cpu().detach().numpy())
-np.savetxt(prefix+'_weighted.txt',weighted_ind_terms.cpu().detach().numpy())
+np.savetxt(f'{prefix}_coeffs.txt', coef_predictions.cpu().detach().numpy())
+np.savetxt(f'{prefix}_weighted.txt', weighted_ind_terms.cpu().detach().numpy())
 
-print("Coefficients saved in: "+prefix+"_coeffs.txt")
-print("Weighted terms saved in: "+prefix+"_weighted.txt")
-
-
-
-
+print(f"Coefficients saved in: {prefix}_coeffs.txt")
+print(f"Weighted terms saved in: {prefix}_weighted.txt")

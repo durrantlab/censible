@@ -49,6 +49,7 @@ def preprocess(termtypes):
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
 
     precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
+
     np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors.cpu())
     np.save('terms_to_keep.npy',which_precalc_terms_to_keep)
     return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
