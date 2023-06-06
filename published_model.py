@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from _training import View
 
+
 class Net(nn.Module):
     """This is the default2018 model that was identified after extensive hyper
     parameter tuning for pose selection and affinity prediction.
@@ -57,5 +58,3 @@ class Net(nn.Module):
             if isinstance(layer, nn.Conv3d):
                 x = self.func(x)
         return (self.fc(x), None, None)
-
-

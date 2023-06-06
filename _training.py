@@ -1,6 +1,7 @@
 import molgrid
 import torch
 import torch.optim as optim
+
 # from _debug import grid_channel_to_xyz_file
 import numpy as np
 from scipy.stats import pearsonr
@@ -8,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
 from _preprocess import remove_rare_terms
+
 
 def load_split(types_filename: str, batch_size: int, is_training_set: bool = False):
     # You need to keep track of the ligand and receptor filenames
@@ -27,7 +29,7 @@ def load_split(types_filename: str, batch_size: int, is_training_set: bool = Fal
     kwargs = {
         "ligmolcache": "lig.molcache2",
         "recmolcache": "rec.molcache2",
-        "iteration_scheme": molgrid.IterationScheme.LargeEpoch
+        "iteration_scheme": molgrid.IterationScheme.LargeEpoch,
     }
 
     if is_training_set:
@@ -52,12 +54,9 @@ def load_split(types_filename: str, batch_size: int, is_training_set: bool = Fal
 
     return dataset, gninatypes_filenames
 
+
 def train_single_fold(
-    Net,
-    which_precalc_terms_to_keep,
-    params,
-    term_names,
-    precalc_term_scale_factors
+    Net, which_precalc_terms_to_keep, params, term_names, precalc_terms_scales
 ):
     # The main object. See
     # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
@@ -86,7 +85,7 @@ def train_single_fold(
     train_dataset, _ = load_split(
         params["prefix"] + ("train%d_cen.types" % params["fold_num"]),
         params["batch_size"],
-        is_training_set=True
+        is_training_set=True,
     )
 
     # Similarly create a testing dataset.
@@ -100,13 +99,15 @@ def train_single_fold(
     test_dataset, test_gninatypes_filenames = load_split(
         params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
         1,
-        is_training_set=False
+        is_training_set=False,
     )
 
     # Note that alllabels doesn't contain all the labels, but is simply a tensor
     # where a given batch's labels will be placed.
     all_labels_for_training = torch.zeros(
-        (params["batch_size"], train_dataset.num_labels()), dtype=torch.float32, device="cuda"
+        (params["batch_size"], train_dataset.num_labels()),
+        dtype=torch.float32,
+        device="cuda",
     )
     single_label_for_testing = torch.zeros(
         (1, train_dataset.num_labels()), dtype=torch.float32, device="cuda"
@@ -124,25 +125,34 @@ def train_single_fold(
         tmp_labels.append(all_labels_for_training.cpu().numpy()[:, 1:])
     train_dataset.reset()
 
-    # Update precalc_term_scale_factors to include only the terms that are
+    # Update precalc_terms_scales to include only the terms that are
     # actually used.
-    precalc_term_scale_factors = precalc_term_scale_factors[which_precalc_terms_to_keep]
-    print(precalc_term_scale_factors)
+    precalc_terms_scales_to_keep = precalc_terms_scales[which_precalc_terms_to_keep]
+    print(precalc_terms_scales_to_keep)
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
     tensor_shape = (params["batch_size"],) + dims  # shape of batched input
-    input_tensor_for_training = torch.zeros(tensor_shape, dtype=torch.float32, device="cuda")
-    single_input_for_testing = torch.zeros((1,) + dims, dtype=torch.float32, device="cuda")
+    input_tensor_for_training = torch.zeros(
+        tensor_shape, dtype=torch.float32, device="cuda"
+    )
+    single_input_for_testing = torch.zeros(
+        (1,) + dims, dtype=torch.float32, device="cuda"
+    )
 
     # Create the model.
     nterms = np.count_nonzero(which_precalc_terms_to_keep)
     model = Net(dims, nterms).to("cuda")
     model.apply(weights_init)
-
+    print(dims)
+    print(nterms)
     # Setup optimizer and scheduler for training.
-    optimizer = optim.SGD(model.parameters(), lr=params["lr"], weight_decay=0.0001, momentum=0.9)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params["step_size"], gamma=0.1)
+    optimizer = optim.SGD(
+        model.parameters(), lr=params["lr"], weight_decay=0.0001, momentum=0.9
+    )
+    scheduler = optim.lr_scheduler.StepLR(
+        optimizer, step_size=params["step_size"], gamma=0.1
+    )
 
     # Keep track of various metrics as training progresses.
     training_losses = []
@@ -167,14 +177,21 @@ def train_single_fold(
             affinity_label_for_training = all_labels_for_training[:, 0]  # affinity only
 
             # Keep only ones that are which_precalc_terms_to_keep (see _preprocess.py)
-            precalculated_terms = all_labels_for_training[:, 1:][:, which_precalc_terms_to_keep]
+            precalculated_terms = all_labels_for_training[:, 1:][
+                :, which_precalc_terms_to_keep
+            ]
 
             # Scale so never outside of -1 to 1
-            precalculated_terms = precalc_term_scale_factors * precalculated_terms  # JDD
+            precalculated_terms = (
+                precalc_terms_scales_to_keep * precalculated_terms
+            )  # JDD
 
             # Get the grid (populates input_tensor_for_training)
             gmaker.forward(
-                train_batch, input_tensor_for_training, random_translation=2, random_rotation=True
+                train_batch,
+                input_tensor_for_training,
+                random_translation=2,
+                random_rotation=True,
             )
 
             # grid_channel_to_xyz_file(input_tensor[0][0])
@@ -186,9 +203,13 @@ def train_single_fold(
             # Get the output for this batch. output[0] is output tensor.
             # output[1] is None for some reason. Note that weighted_terms is the
             # pre-calculated terms times the coefficients.
-            output, coef_predict, weighted_terms = model(input_tensor_for_training, precalculated_terms)
+            output, coef_predict, weighted_terms = model(
+                input_tensor_for_training, precalculated_terms
+            )
 
-            training_loss = F.smooth_l1_loss(output.flatten(), affinity_label_for_training.flatten())
+            training_loss = F.smooth_l1_loss(
+                output.flatten(), affinity_label_for_training.flatten()
+            )
             training_loss.backward()
 
             # print(loss)
@@ -219,20 +240,24 @@ def train_single_fold(
 
                 # Run that through the model.
                 output, coef_predict, weighted_terms = model(
-                    single_input_for_testing, 
-                    single_label_for_testing[:, 1:][:, which_precalc_terms_to_keep] * precalc_term_scale_factors  # JDD
+                    single_input_for_testing,
+                    single_label_for_testing[:, 1:][:, which_precalc_terms_to_keep]
+                    * precalc_terms_scales_to_keep,  # JDD
                 )
 
                 if coef_predict is not None:
                     # There is a prediction, so copy the coeficients and
                     # contributions for later display.
                     test_coefs_predict_lst.append(coef_predict.detach().cpu().numpy())
-                    test_weighted_terms_lst.append(weighted_terms.detach().cpu().numpy())
-
+                    test_weighted_terms_lst.append(
+                        weighted_terms.detach().cpu().numpy()
+                    )
 
                 # Record measured and predicted affinities
                 test_results.append(output.detach().cpu().numpy())
-                test_labels.append(single_label_for_testing[:, 0].detach().cpu().numpy())
+                test_labels.append(
+                    single_label_for_testing[:, 0].detach().cpu().numpy()
+                )
 
             # Collect the testing statistics.
             test_results = np.array(test_results).flatten()
@@ -260,7 +285,7 @@ def train_single_fold(
         test_coefs_predict_lst,
         test_weighted_terms_lst,
         which_precalc_terms_to_keep,
-        precalc_term_scale_factors
+        precalc_terms_scales_to_keep,
     )
 
 

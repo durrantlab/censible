@@ -1,5 +1,5 @@
 from _training import train_single_fold
-from _graphs import generate_graphs
+from _outputs import generate_outputs
 import numpy as np
 import json
 import argparse
@@ -19,43 +19,31 @@ import os
 params = [
     {
         "name": "epochs",
-        "val": 250, # 400,
-        "description": "Number of epochs to train for."
+        "val": 250,  # 400,
+        "description": "Number of epochs to train for.",
     },
-    {
-        "name": "fold_num",
-        "val": 0,
-        "description": "Which fold to train on."
-    },
-    {
-        "name": "batch_size",
-        "val": 25,
-        "description": "Batch size."
-    },
-    {
-        "name": "lr",
-        "val": 0.01,
-        "description": "Learning rate."
-    },
+    {"name": "fold_num", "val": 0, "description": "Which fold to train on."},
+    {"name": "batch_size", "val": 25, "description": "Batch size."},
+    {"name": "lr", "val": 0.01, "description": "Learning rate."},
     {
         "name": "step_size",
         "val": 80,
-        "description": "Step size for learning rate decay."
+        "description": "Step size for learning rate decay.",
     },
     {
         "name": "prefix",
         "val": "randomsplit",
-        "description": "Prefix for the input types files."  # TODO: Correct description?
+        "description": "Prefix for the input types files.",  # TODO: Correct description?
     },
     {
         "name": "termtypes",
         "val": "all",
-        "description": "Which terms to use. Can be 'all', 'smina', or 'gaussian'."
+        "description": "Which terms to use. Can be 'all', 'smina', or 'gaussian'.",
     },
     {
         "name": "data_dir",
         "val": "./prepare_data/",
-        "description": "Directory where the data is stored."
+        "description": "Directory where the data is stored.",
     },
 ]
 # "prefix": "crystal",
@@ -65,9 +53,10 @@ parser = argparse.ArgumentParser()
 for value in params:
     # parser.add_argument("--" + key, type=type(value), default=value)
     parser.add_argument(
-        "--" + value["name"], type=type(value["val"]), 
-        default=value["val"], 
-        help=value["description"] + " Default: " + str(value["val"])
+        "--" + value["name"],
+        type=type(value["val"]),
+        default=value["val"],
+        help=value["description"] + " Default: " + str(value["val"]),
     )
 args = parser.parse_args()
 params = vars(args)
@@ -85,11 +74,11 @@ os.chdir(params["data_dir"])
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
 # keeping, False otherwise. term_names is a list of all the term names.
-which_precalc_terms_to_keep, term_names, precalc_term_scale_factors = preprocess(
+which_precalc_terms_to_keep, term_names, precalc_terms_scales = preprocess(
     params["termtypes"]
 )
 
-print('Preprocessing done.')
+print("Preprocessing done.")
 
 # Train the model
 (
@@ -104,13 +93,9 @@ print('Preprocessing done.')
     test_coefs_predict_lst,
     test_weighted_terms_lst,
     which_precalc_terms_to_keep,
-    precalc_term_scale_factors_updated
+    precalc_terms_scales_to_keep,
 ) = train_single_fold(
-    CENet,
-    which_precalc_terms_to_keep,
-    params,
-    term_names,
-    precalc_term_scale_factors
+    CENet, which_precalc_terms_to_keep, params, term_names, precalc_terms_scales
 )
 
 # Save model
@@ -126,19 +111,39 @@ now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
 save_dir = orig_dir + "imgs/" + now_str + "/"
 os.mkdir(save_dir)
 
+# Save the model
 torch.save(model.state_dict(), save_dir + "model.pt")
+
+# Save a boolean list of which precalculated terms are used in this model
+np.save(save_dir + "which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
 with open(save_dir + "which_precalc_terms_to_keep.txt", "w") as f:
     f.write(str(which_precalc_terms_to_keep))
-with open(save_dir + "precalc_term_scale_factors.txt", "w") as f:
-    f.write(str(precalc_term_scale_factors_updated))
+
+# Save the names of the retained terms
 with open(save_dir + "term_names.txt", "w") as f:
-    f.write(str([term_names[i] for i in range(len(term_names)) if which_precalc_terms_to_keep[i]]))
+    f.write(
+        str(
+            [
+                term_names[i]
+                for i in range(len(term_names))
+                if which_precalc_terms_to_keep[i]
+            ]
+        )
+    )
 
-# Save weights and predictions
-np.save("weights_and_predictions.npy",np.hstack([np.array(test_coefs_predict_lst).squeeze(),test_results[:,None]]))
-#np.save("predictions.npy",results)
+# Save the normalization factors applied to the retained precalculated terms.
+np.save(save_dir + "precalc_terms_scales.npy", precalc_terms_scales_to_keep.cpu())
+with open(save_dir + "precalc_terms_scales.txt", "w") as f:
+    f.write(str(precalc_terms_scales_to_keep))
 
-generate_graphs(
+# Save weights and predictions. TODO: Where is this used?
+np.save(
+    save_dir + "weights_and_predictions.npy",
+    np.hstack([np.array(test_coefs_predict_lst).squeeze(), test_results[:, None]]),
+)
+# np.save("predictions.npy",results)
+
+generate_outputs(
     save_dir,
     training_losses,
     test_labels,
@@ -149,5 +154,5 @@ generate_graphs(
     test_weighted_terms_lst,
     which_precalc_terms_to_keep,
     term_names,
-    params
+    params,
 )

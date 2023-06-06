@@ -5,6 +5,7 @@ import numpy as np
 
 RARE_TERM_RATIO_CUTOFF = 0.01
 
+
 def preprocess(termtypes):
     # Some atomic interactions are nonexistent or rare and should be ignored.
     # Calculate statistics for each term.
@@ -48,12 +49,17 @@ def preprocess(termtypes):
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
 
-    precalc_term_scale_factors = normalize_terms(all_terms, which_precalc_terms_to_keep)
-    np.save(termtypes+"_normalization_factors.npy", precalc_term_scale_factors.cpu())
+    precalc_terms_scales = normalize_terms(all_terms, which_precalc_terms_to_keep)
 
-    return which_precalc_terms_to_keep, term_names, precalc_term_scale_factors
+    return which_precalc_terms_to_keep, term_names, precalc_terms_scales
 
-def remove_rare_terms(all_terms: np.ndarray, termtypes: str, term_names: List[str], which_precalc_terms_to_keep: np.ndarray = None):
+
+def remove_rare_terms(
+    all_terms: np.ndarray,
+    termtypes: str,
+    term_names: List[str],
+    which_precalc_terms_to_keep: np.ndarray = None,
+):
     global RARE_TERM_RATIO_CUTOFF
 
     # If which_precalc_terms_to_keep is not provided, then it is calculated here. All trues.
@@ -69,29 +75,46 @@ def remove_rare_terms(all_terms: np.ndarray, termtypes: str, term_names: List[st
     to_keep = cnts > min_examples_permitted
 
     # Update which_precalc_terms_to_keep
-    which_precalc_terms_to_keep = np.logical_and(
-        which_precalc_terms_to_keep, to_keep
-    )
+    which_precalc_terms_to_keep = np.logical_and(which_precalc_terms_to_keep, to_keep)
 
-    # It seems ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8) was accidentally
-    # included twice. Let's turn off the second instance. Hackish.
-    idx = np.array([i for i in range(len(term_names)) if "ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8)" in term_names[i]])
+    # It seems ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8) is included twice.
+    # Let's turn off the second instance. Hackish.
+    idx = np.array(
+        [
+            i
+            for i in range(len(term_names))
+            if "ad4_solvation(d-sigma=3.6,_s/q=0.01097,_c=8)" in term_names[i]
+        ]
+    )
     assert len(idx) == 2
     which_precalc_terms_to_keep[idx[-1]] = False
 
-    if termtypes == 'smina':
+    if termtypes == "smina":
         # Get the indexes of the term_names that contain the string "atom_type_gaussian"
-        idx = np.array([i for i in range(len(term_names)) if "atom_type_gaussian" in term_names[i]])
+        idx = np.array(
+            [i for i in range(len(term_names)) if "atom_type_gaussian" in term_names[i]]
+        )
         which_precalc_terms_to_keep[idx] = False
-    elif termtypes == 'gaussian':
+    elif termtypes == "gaussian":
         # Get the indexes of the term_names that do not contain the string "atom_type_gaussian"
-        idx = np.array([i for i in range(len(term_names)) if "atom_type_gaussian" not in term_names[i]])
+        idx = np.array(
+            [
+                i
+                for i in range(len(term_names))
+                if "atom_type_gaussian" not in term_names[i]
+            ]
+        )
         which_precalc_terms_to_keep[idx] = False
 
-    print("Number of terms retained: " + str(np.sum(which_precalc_terms_to_keep == True)))
-    print("Number of terms removed: " + str(np.sum(which_precalc_terms_to_keep == False)))
+    print(
+        "Number of terms retained: " + str(np.sum(which_precalc_terms_to_keep == True))
+    )
+    print(
+        "Number of terms removed: " + str(np.sum(which_precalc_terms_to_keep == False))
+    )
 
     return which_precalc_terms_to_keep
+
 
 def normalize_terms(all_terms, which_precalc_terms_to_keep):
     # TODO: Need to implement ability tosave values in factors and load them
@@ -99,15 +122,15 @@ def normalize_terms(all_terms, which_precalc_terms_to_keep):
 
     MAX_VAL_AFTER_NORM = 1.0
 
-    # Normalize the columns so the values go between 0 and 1. 
-    precalc_term_scale_factors = np.zeros(all_terms.shape[1])
+    # Normalize the columns so the values go between 0 and 1.
+    precalc_terms_scales = np.zeros(all_terms.shape[1])
     for i in range(all_terms.shape[1]):
         col = all_terms[:, i]
         max_abs = np.max(np.abs(col))
-        precalc_term_scale_factors[i] = 1.0
+        precalc_terms_scales[i] = 1.0
 
         if max_abs > 0:
-            precalc_term_scale_factors[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
+            precalc_terms_scales[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
 
     # Save factors
     # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
@@ -120,12 +143,14 @@ def normalize_terms(all_terms, which_precalc_terms_to_keep):
     # Check to make sure between -1 and 1
     # batch_labels_tmp = batch_labels[:, 1:][:, goodfeatures] * factors
     # print(
-    #     float(batch_labels_tmp.max()), 
+    #     float(batch_labels_tmp.max()),
     #     float(batch_labels_tmp.min())
     # )
 
     # Convert factors to a tensor
-    precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float().to(device="cuda")
-    #precalc_term_scale_factors = torch.from_numpy(precalc_term_scale_factors).float()
+    precalc_terms_scales = (
+        torch.from_numpy(precalc_terms_scales).float().to(device="cuda")
+    )
+    # precalc_terms_scales = torch.from_numpy(precalc_terms_scales).float()
 
-    return precalc_term_scale_factors
+    return precalc_terms_scales
