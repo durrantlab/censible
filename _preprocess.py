@@ -49,9 +49,9 @@ def preprocess(termtypes):
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
 
-    precalc_terms_scales = normalize_terms(all_terms, which_precalc_terms_to_keep)
+    precalc_term_scales = normalize_terms(all_terms, which_precalc_terms_to_keep)
 
-    return which_precalc_terms_to_keep, term_names, precalc_terms_scales
+    return which_precalc_terms_to_keep, term_names, precalc_term_scales
 
 
 def remove_rare_terms(
@@ -123,14 +123,14 @@ def normalize_terms(all_terms, which_precalc_terms_to_keep):
     MAX_VAL_AFTER_NORM = 1.0
 
     # Normalize the columns so the values go between 0 and 1.
-    precalc_terms_scales = np.zeros(all_terms.shape[1])
+    precalc_term_scales = np.zeros(all_terms.shape[1])
     for i in range(all_terms.shape[1]):
         col = all_terms[:, i]
         max_abs = np.max(np.abs(col))
-        precalc_terms_scales[i] = 1.0
+        precalc_term_scales[i] = 1.0
 
         if max_abs > 0:
-            precalc_terms_scales[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
+            precalc_term_scales[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
 
     # Save factors
     # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
@@ -148,9 +148,9 @@ def normalize_terms(all_terms, which_precalc_terms_to_keep):
     # )
 
     # Convert factors to a tensor
-    precalc_terms_scales = (
-        torch.from_numpy(precalc_terms_scales).float().to(device="cuda")
+    precalc_term_scales = (
+        torch.from_numpy(precalc_term_scales).float().to(device="cuda")
     )
-    # precalc_terms_scales = torch.from_numpy(precalc_terms_scales).float()
+    # precalc_term_scales = torch.from_numpy(precalc_term_scales).float()
 
-    return precalc_terms_scales
+    return precalc_term_scales

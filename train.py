@@ -74,7 +74,7 @@ os.chdir(params["data_dir"])
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is worth
 # keeping, False otherwise. term_names is a list of all the term names.
-which_precalc_terms_to_keep, term_names, precalc_terms_scales = preprocess(
+which_precalc_terms_to_keep, term_names, precalc_term_scales = preprocess(
     params["termtypes"]
 )
 
@@ -93,9 +93,9 @@ print("Preprocessing done.")
     test_coefs_predict_lst,
     test_weighted_terms_lst,
     which_precalc_terms_to_keep,
-    precalc_terms_scales_to_keep,
+    precalc_term_scales_to_keep,
 ) = train_single_fold(
-    CENet, which_precalc_terms_to_keep, params, term_names, precalc_terms_scales
+    CENet, which_precalc_terms_to_keep, params, term_names, precalc_term_scales
 )
 
 # Save model
@@ -111,16 +111,20 @@ now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
 save_dir = orig_dir + "imgs/" + now_str + "/"
 os.mkdir(save_dir)
 
+# Make report subdirectory
+report_subdir = save_dir + "report/"
+os.mkdir(report_subdir)
+
 # Save the model
 torch.save(model.state_dict(), save_dir + "model.pt")
 
 # Save a boolean list of which precalculated terms are used in this model
 np.save(save_dir + "which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
-with open(save_dir + "which_precalc_terms_to_keep.txt", "w") as f:
+with open(report_subdir + "which_precalc_terms_to_keep.txt", "w") as f:
     f.write(str(which_precalc_terms_to_keep))
 
 # Save the names of the retained terms
-with open(save_dir + "term_names.txt", "w") as f:
+with open(report_subdir + "term_names.txt", "w") as f:
     f.write(
         str(
             [
@@ -132,19 +136,19 @@ with open(save_dir + "term_names.txt", "w") as f:
     )
 
 # Save the normalization factors applied to the retained precalculated terms.
-np.save(save_dir + "precalc_terms_scales.npy", precalc_terms_scales_to_keep.cpu())
-with open(save_dir + "precalc_terms_scales.txt", "w") as f:
-    f.write(str(precalc_terms_scales_to_keep))
+np.save(save_dir + "precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
+with open(report_subdir + "precalc_term_scales.txt", "w") as f:
+    f.write(str(precalc_term_scales_to_keep))
 
 # Save weights and predictions. TODO: Where is this used?
 np.save(
-    save_dir + "weights_and_predictions.npy",
+    report_subdir + "weights_and_predictions.npy",
     np.hstack([np.array(test_coefs_predict_lst).squeeze(), test_results[:, None]]),
 )
 # np.save("predictions.npy",results)
 
 generate_outputs(
-    save_dir,
+    report_subdir,
     training_losses,
     test_labels,
     test_results,

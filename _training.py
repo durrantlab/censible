@@ -56,7 +56,7 @@ def load_split(types_filename: str, batch_size: int, is_training_set: bool = Fal
 
 
 def train_single_fold(
-    Net, which_precalc_terms_to_keep, params, term_names, precalc_terms_scales
+    Net, which_precalc_terms_to_keep, params, term_names, precalc_term_scales
 ):
     # The main object. See
     # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
@@ -125,10 +125,10 @@ def train_single_fold(
         tmp_labels.append(all_labels_for_training.cpu().numpy()[:, 1:])
     train_dataset.reset()
 
-    # Update precalc_terms_scales to include only the terms that are
+    # Update precalc_term_scales to include only the terms that are
     # actually used.
-    precalc_terms_scales_to_keep = precalc_terms_scales[which_precalc_terms_to_keep]
-    print(precalc_terms_scales_to_keep)
+    precalc_term_scales_to_keep = precalc_term_scales[which_precalc_terms_to_keep]
+    print(precalc_term_scales_to_keep)
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
@@ -183,7 +183,7 @@ def train_single_fold(
 
             # Scale so never outside of -1 to 1
             precalculated_terms = (
-                precalc_terms_scales_to_keep * precalculated_terms
+                precalc_term_scales_to_keep * precalculated_terms
             )  # JDD
 
             # Get the grid (populates input_tensor_for_training)
@@ -242,7 +242,7 @@ def train_single_fold(
                 output, coef_predict, weighted_terms = model(
                     single_input_for_testing,
                     single_label_for_testing[:, 1:][:, which_precalc_terms_to_keep]
-                    * precalc_terms_scales_to_keep,  # JDD
+                    * precalc_term_scales_to_keep,  # JDD
                 )
 
                 if coef_predict is not None:
@@ -285,7 +285,7 @@ def train_single_fold(
         test_coefs_predict_lst,
         test_weighted_terms_lst,
         which_precalc_terms_to_keep,
-        precalc_terms_scales_to_keep,
+        precalc_term_scales_to_keep,
     )
 
 
