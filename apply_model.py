@@ -7,8 +7,13 @@ import torch
 import numpy as np
 import subprocess
 import os
+import re
 
 from CEN_model import CENet
+
+def is_numeric(s):
+    """Return a boolean representing if the string s is a numeric string."""
+    return bool(re.match(r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$', s))
 
 def load_example(
     lig_datapath,
@@ -40,17 +45,26 @@ def load_example(
         assert t1 == t2, f"terms not in correct order: {t1} != {t2}"
 
     # Get the computed terms as a string.
+    line_with_terms = [l for l in smina_out if l.startswith("##")][-1]
+    all_smina_computed_terms = line_with_terms.split()
+
+    # Keep only those terms in all_smina_computed_terms that are numeric
+    # (meaning they contain -, numbers, e, and .).
+    all_smina_computed_terms = [
+        t for t in all_smina_computed_terms if is_numeric(t)
+    ]
+
     all_smina_computed_terms_str = " ".join(
-        [l for l in smina_out if l.startswith("##")][-1].split()[1:]
+        all_smina_computed_terms
     )
 
     smina_outfile = "types_file_cen.tmp"
     with open(smina_outfile, "w") as smina_out_f:
         smina_out_f.write(
             f"{all_smina_computed_terms_str} "
-            + rec_datapath.split("a/")[-1]
+            + rec_datapath # .split("a/")[-1]
             + " "
-            + lig_datapath.split("a/")[-1]
+            + lig_datapath # .split("a/")[-1]
         )
 
     example = molgrid.ExampleProvider(
