@@ -8,6 +8,7 @@ import numpy as np
 import subprocess
 import os
 import re
+import random
 
 from CEN_model import CENet
 
@@ -58,7 +59,7 @@ def load_example(
         all_smina_computed_terms
     )
 
-    smina_outfile = "types_file_cen.tmp"
+    smina_outfile = "types_file_cen." + str(random.randint(0, 1000000000)) + ".tmp"
     with open(smina_outfile, "w") as smina_out_f:
         smina_out_f.write(
             f"{all_smina_computed_terms_str} "
@@ -73,6 +74,9 @@ def load_example(
         default_batch_size=1,
     )
     example.populate(smina_outfile)
+
+    # Delete the temporary file.
+    os.remove(smina_outfile)
 
     return (example, which_precalc_terms, norm_factors_to_keep)
 
@@ -113,7 +117,10 @@ def test_apply(example_data, which_precalc_terms_to_keep, norm_factors, model):
     # Now get only those precalculated terms you'll use.
     precalc_terms_to_use = all_precalc_terms[:, :][:, which_precalc_terms_to_keep]
 
-    # Populate the input_voxel tensor with the one example.
+    # Populate the input_voxel tensor with the one example. Note that not using
+    # random_translation and random_rotation keywords. Thus, this is
+    # deterministic. Unlike during training, when you do add random translation
+    # and rotation.
     gm.forward(test_batch, input_voxel)
 
     model.to("cuda")
