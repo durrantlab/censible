@@ -12,37 +12,29 @@ import random
 
 from CEN_model import CENet
 
+
 def is_numeric(s):
     """Return a boolean representing if the string s is a numeric string."""
-    return bool(re.match(r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$', s))
+    return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
+
 
 def load_example(
-    lig_datapath,
-    rec_datapath,
-    which_precalc_terms_to_keep,
-    precalc_term_scales,
-    smina_exec_path,
+    lig_path: str,
+    rec_path: str,
+    smina_exec_path: str,
+    smina_terms_mask,
+    smina_ordered_terms_names,
 ):
-    ### get the single_example_terms -- one set of smina computed terms
-    # load normalization term data
-    which_precalc_terms_mask = np.load(which_precalc_terms_to_keep)
-    norm_factors_to_keep = np.load(precalc_term_scales)
-
-    # Get the path to the custom_scoring.txt file. It is in the same directory
-    # as this python script.
-    custom_scoring_path = os.path.dirname(os.path.realpath(__file__)) + os.sep + "custom_scoring.txt"
-
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
-    cmd = f"{smina_exec_path} --custom_scoring {custom_scoring_path} --score_only -r {rec_datapath} -l {lig_datapath}"
+    cmd = f"{smina_exec_path} --custom_scoring {custom_scoring_path} --score_only -r {rec_path} -l {lig_path}"
     smina_out = str(subprocess.check_output(cmd, shell=True)).split("\\n")
 
     # It's critical to make sure the order is correct (could change with new version of smina).
-    ordered_terms_names = [l for l in smina_out if l.startswith("## Name")][0][8:].split()
-    smina_ordered_terms_path = os.path.dirname(os.path.realpath(__file__)) + os.sep + "smina_ordered_terms.txt"
-    with open(smina_ordered_terms_path) as f:
-        smina_ordered_terms_names = f.read().strip().split()
-    for t1, t2 in zip(ordered_terms_names, smina_ordered_terms_names):
+    actual_ordered_terms_names = [l for l in smina_out if l.startswith("## Name")][0][
+        8:
+    ].split()
+    for t1, t2 in zip(actual_ordered_terms_names, smina_ordered_terms_names):
         assert t1 == t2, f"terms not in correct order: {t1} != {t2}"
 
     # Get the computed terms as a string.
@@ -51,21 +43,16 @@ def load_example(
 
     # Keep only those terms in all_smina_computed_terms that are numeric
     # (meaning they contain -, numbers, e, and .).
-    all_smina_computed_terms = [
-        t for t in all_smina_computed_terms if is_numeric(t)
-    ]
-
-    all_smina_computed_terms_str = " ".join(
-        all_smina_computed_terms
-    )
+    all_smina_computed_terms = [t for t in all_smina_computed_terms if is_numeric(t)]
+    all_smina_computed_terms_str = " ".join(all_smina_computed_terms)
 
     smina_outfile = "types_file_cen." + str(random.randint(0, 1000000000)) + ".tmp"
     with open(smina_outfile, "w") as smina_out_f:
         smina_out_f.write(
             f"{all_smina_computed_terms_str} "
-            + rec_datapath # .split("a/")[-1]
+            + rec_path  # .split("a/")[-1]
             + " "
-            + lig_datapath # .split("a/")[-1]
+            + lig_path  # .split("a/")[-1]
         )
 
     example = molgrid.ExampleProvider(
@@ -78,31 +65,52 @@ def load_example(
     # Delete the temporary file.
     os.remove(smina_outfile)
 
-    ordered_terms_names_to_keep = np.array(ordered_terms_names)[which_precalc_terms_mask]
-
-    return (example, which_precalc_terms_mask, norm_factors_to_keep, ordered_terms_names_to_keep)
+    return example
 
 
 # load in model -- from torch
-def load_model(modelpath, num_terms):
+def load_model(
+    model_path: str, smina_terms_mask_path: str, smina_term_scales_path: str
+):
+    ### get the single_example_terms -- one set of smina computed terms
+    # load normalization term data
+    smina_terms_mask = np.load(smina_terms_mask_path)
+    norm_factors_masked = np.load(smina_term_scales_path)
+
     dims = (28, 48, 48, 48)
-    model = CENet(dims, num_terms)
-    model.load_state_dict(torch.load(modelpath))
+    model = CENet(dims, len(norm_factors_masked))
+    model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    return model
+    # Get the path to the custom_scoring.txt file. It is in the same directory
+    # as this python script.
+    custom_scoring_path = (
+        os.path.dirname(os.path.realpath(__file__)) + os.sep + "custom_scoring.txt"
+    )
+
+    smina_ordered_terms_path = (
+        os.path.dirname(os.path.realpath(__file__)) + os.sep + "smina_ordered_terms.txt"
+    )
+    with open(smina_ordered_terms_path) as f:
+        smina_ordered_terms_names = f.read().strip().split()
+
+    return (
+        model,
+        smina_terms_mask,
+        norm_factors_masked,
+        custom_scoring_path,
+        smina_ordered_terms_names,
+    )
 
 
 # apply model to test data
-def test_apply(example_data, which_precalc_terms_mask, precalc_terms_to_use_norm_factors, model):
-    precalc_terms_to_use_norm_factors = torch.from_numpy(precalc_terms_to_use_norm_factors).to("cuda")
+def test_apply(example_data, smina_terms_mask, smina_norm_factors_masked, model):
+    smina_norm_factors_masked = torch.from_numpy(smina_norm_factors_masked).to("cuda")
 
-    which_precalc_terms_to_keep_torch = torch.from_numpy(which_precalc_terms_mask).to(
-        "cuda"
-    )
+    smina_terms_mask_trch = torch.from_numpy(smina_terms_mask).to("cuda")
 
     # Create tensors to store the precalculated terms and the input voxels.
-    all_precalc_terms = torch.zeros(
+    all_smina_terms = torch.zeros(
         (1, example_data.num_labels()), dtype=torch.float32, device="cuda"
     )
     input_voxel = torch.zeros(
@@ -114,10 +122,10 @@ def test_apply(example_data, which_precalc_terms_mask, precalc_terms_to_use_norm
 
     # Get this batch's labels and put them in all_precalc_terms. This is all
     # labels, not just the one's you'll use.
-    test_batch.extract_labels(all_precalc_terms)
+    test_batch.extract_labels(all_smina_terms)
 
     # Now get only those precalculated terms you'll use.
-    precalc_terms_to_use = all_precalc_terms[:, :][:, which_precalc_terms_to_keep_torch]
+    smina_terms_masked = all_smina_terms[:, :][:, smina_terms_mask_trch]
 
     # Populate the input_voxel tensor with the one example. Note that not using
     # random_translation and random_rotation keywords. Thus, this is
@@ -128,23 +136,29 @@ def test_apply(example_data, which_precalc_terms_mask, precalc_terms_to_use_norm
 
     # print("running model to predict")
 
-    scaled_precalc_terms_to_use = precalc_terms_to_use * precalc_terms_to_use_norm_factors
+    scaled_smina_terms_masked = smina_terms_masked * smina_norm_factors_masked
 
     # Run that through the model.
     model.to("cuda")
     predicted_affinity, weights_predict, contributions_predict = model(
-        input_voxel, scaled_precalc_terms_to_use
+        input_voxel, scaled_smina_terms_masked
     )
 
-    # weighted_terms = coef_predict * scaled_precalc_terms_to_use
+    # weighted_terms = coef_predict * scaled_smina_terms_masked
 
-    # scaled_precalc_terms_to_use = scaled_precalc_terms_to_use.cpu().detach().numpy()
-    precalc_terms_to_use = precalc_terms_to_use.cpu().detach().numpy()
-    # precalc_terms_to_use_norm_factors = precalc_terms_to_use_norm_factors.cpu().detach().numpy()
-    weights_predict = weights_predict.cpu().detach().numpy()
-    contributions_predict = contributions_predict.cpu().detach().numpy()
+    # scaled_smina_terms_masked = scaled_smina_terms_masked.cpu().detach().numpy()
+    smina_terms_masked = smina_terms_masked.cpu().detach().numpy()[0]
+    # smina_norm_factors_masked = smina_norm_factors_masked.cpu().detach().numpy()
+    weights_predict = weights_predict.cpu().detach().numpy()[0]
+    contributions_predict = contributions_predict.cpu().detach().numpy()[0]
 
-    return (predicted_affinity, weights_predict, contributions_predict, precalc_terms_to_use)
+    return (
+        predicted_affinity,
+        weights_predict,
+        contributions_predict,
+        smina_terms_masked,
+    )
+
 
 def get_numeric_val(s: str, varname: str) -> str:
     # v is a number, so only digits, +/-, and .
@@ -198,7 +212,7 @@ def full_term_description(term: str) -> str:
 
     elif term.startswith("non_dir_h_bond("):
         desc = f"non-directional hydrogen bond (vina): good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see PMC3041641"
-    
+
     elif term.startswith("non_dir_anti_h_bond_quadratic"):
         desc = f"mimics repulsion between polar atoms that can't hydrogen bond: offset: {o}; distance cutoff: {_c}; see ???"
     elif term.startswith("non_dir_h_bond_lj("):
@@ -237,7 +251,9 @@ def full_term_description(term: str) -> str:
 def get_cmd_args():
     # Create argparser
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ligpath", required=True, nargs='+', help="path to the ligand(s)")
+    parser.add_argument(
+        "--ligpath", required=True, nargs="+", help="path to the ligand(s)"
+    )
     parser.add_argument("--recpath", required=True, help="path to the receptor")
     parser.add_argument(
         "--model_dir",
@@ -259,78 +275,107 @@ def get_cmd_args():
 
 args = get_cmd_args()
 
-for lig in args.ligpath:
-    # load the data
-    example, which_precalc_terms_mask, norm_factors_to_keep, ordered_terms_names_to_keep = load_example(
-        lig,
+# load the model
+model, smina_terms_mask, norm_factors_masked, custom_scoring_path, smina_ordered_terms_names = load_model(
+    args.model_dir + os.sep + "model.pt",
+    args.model_dir + os.sep + "which_precalc_terms_to_keep.npy",
+    args.model_dir + os.sep + "precalc_term_scales.npy",
+)
+
+tsv_output = ""
+
+bar = "=====================================\n"
+
+print("")
+
+for lig_path in args.ligpath:
+    terminal_output = ""
+
+    # Load the data. TODO: One ligand at a time here for simplicity's sake.
+    # Could batch to improve speed, I think.
+    example = load_example(
+        lig_path,
         args.recpath,
-        args.model_dir + os.sep + "which_precalc_terms_to_keep.npy",
-        args.model_dir + os.sep + "precalc_term_scales.npy",
         args.smina_exec_path,
+        smina_terms_mask,
+        smina_ordered_terms_names,
     )
 
-    # load the model
-    model = load_model(args.model_dir + os.sep + "model.pt", len(norm_factors_to_keep))
-
-    # print("data and model loaded.")
-    predicted_affinity, weights_predict, contributions_predict, precalc_terms_to_use = test_apply(
-        example, which_precalc_terms_mask, norm_factors_to_keep, model
+    predicted_affinity, weights_predict, contributions_predict, smina_terms_masked = test_apply(
+        example, smina_terms_mask, norm_factors_masked, model
     )
 
-    tsv_output = f"receptor\t{args.recpath}\n"
-    tsv_output += f"ligand\t{lig}\n\n"
-    tsv_output += f"predicted_affinity\t{str(round(float(predicted_affinity), 5))}\n\n"
+    terminal_output += f"receptor\t{args.recpath}\n"
+    terminal_output += f"ligand\t{lig_path}\n\n"
+    terminal_output += f"predicted_affinity\t{str(round(float(predicted_affinity), 5))}\n"
 
-    print(tsv_output)
+    print(terminal_output)
 
     if args.out != "":
+        print("See " + args.out + " for predicted weights and contributions.")
+    else:
+        print("WARNING: No output file specified (--out). Not saving weights and contributions.")
+
+    print("\n" + bar)
+
+    tsv_output += terminal_output
+
+    if args.out != "":
+        # If you're going to print out the specific terms, you need to get the
+        # names of only those in the mask.
+        smina_ordered_terms_names_masked = np.array(smina_ordered_terms_names)[
+            smina_terms_mask
+        ]
+
         # If specifying an output file, provide additional information and save.
-        tsv_output += "\t" + "\t".join(ordered_terms_names_to_keep) + "\n"
+        tsv_output += "\t" + "\t".join(smina_ordered_terms_names_masked) + "\n"
 
-        tsv_output += "\t" + "\t".join(
-            [full_term_description(t) for t in ordered_terms_names_to_keep]
-        ) + "\n"
+        tsv_output += (
+            "\t"
+            + "\t".join(
+                [full_term_description(t) for t in smina_ordered_terms_names_masked]
+            )
+            + "\n"
+        )
 
-        for name in ordered_terms_names_to_keep:
+        for name in smina_ordered_terms_names_masked:
             full_term_description(name)
 
+        tsv_output += (
+            "precalc_smina_terms\t"
+            + "\t".join([str(round(x, 5)) for x in smina_terms_masked])
+            + "\n"
+        )
 
-        # TODO: Some require [0], others don't. Why? Seems disorganized.
-        tsv_output += "precalc_smina_terms\t" + "\t".join(
-            [str(round(x, 5)) for x in precalc_terms_to_use[0]]
-        ) + "\n"
-        
         # tsv_output += "Precalc-term normalization scales\t" + "\t".join(
-        #     [str(round(x, 5)) for x in norm_factors_to_keep]
+        #     [str(round(x, 5)) for x in norm_factors_masked]
         # ) + "\n"
-        
+
         # import pdb ;pdb.set_trace()
-        tsv_output += "normalized_precalc_smina_terms\t" + "\t".join(
-            [str(round(x, 5)) for x in precalc_terms_to_use[0] * norm_factors_to_keep]
-        ) + "\n"
-        tsv_output += "predicted_weights\t" + "\t".join([str(round(x, 5)) for x in weights_predict[0]]) + "\n"
-        tsv_output += "predicted_contributions\t" + "\t".join(
-            [str(round(x, 5)) for x in contributions_predict[0]]
-        ) + "\n"
+        tsv_output += (
+            "normalized_precalc_smina_terms\t"
+            + "\t".join(
+                [
+                    str(round(x, 5))
+                    for x in smina_terms_masked * norm_factors_masked
+                ]
+            )
+            + "\n"
+        )
+        tsv_output += (
+            "predicted_weights\t"
+            + "\t".join([str(round(x, 5)) for x in weights_predict])
+            + "\n"
+        )
+        tsv_output += (
+            "predicted_contributions\t"
+            + "\t".join([str(round(x, 5)) for x in contributions_predict])
+            + "\n\n"
+        )
 
+        tsv_output += bar
 
-        with open(args.out, "w") as f:
-            # Report the receptor/ligand:
-            f.write(tsv_output)
-
-    # if args.out_prefix == "":
-    #     prefix = (
-    #         lig.split("/")[-1].split(".")[-2]
-    #         + "_"
-    #         + args.recpath.split("/")[-1].split(".")[-2]
-    #     )
-    # else:
-    #     prefix = args.out_prefix
-
-    # if args.out_prefix != "":
-    #     prefix = args.out_prefix
-    #     np.savetxt(f"{prefix}_coeffs.txt", weights_predict.cpu().detach().numpy())
-    #     np.savetxt(f"{prefix}_weighted.txt", contributions_predict.cpu().detach().numpy())
-
-    #     print(f"Coefficients saved in: {prefix}_coeffs.txt")
-    #     print(f"Weighted terms saved in: {prefix}_weighted.txt")
+if args.out != "":
+    with open(args.out, "w") as f:
+        # Report the receptor/ligand:
+        f.write(tsv_output)
