@@ -57,7 +57,7 @@ def load_example(
 
     example = molgrid.ExampleProvider(
         # data_root can be any directory, I think.
-        data_root="./",
+        #data_root="./",
         default_batch_size=1,
     )
     example.populate(smina_outfile)
