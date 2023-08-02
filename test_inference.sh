@@ -1,9 +1,13 @@
+# original ligand pdbqt file, gzipped (.pdbqt.gz). Not processed using vina_split
+# (this script also does that)
 lig=${1}
-posenum="1"
+
+# The pose ("1", "2", or "3")
+posenum=${2}
 
 mkdir -p scratch
 
-recep="/mnt/Data/jdurrant/cenet/5.4EG4_no_extra_ligs.no_wats.not_lig.CAS_to_CYS.pdb"
+recep="/mnt/Data/jdurrant/cenet_vs/hxk4/3.receptor/receptor.pdb"
 
 # Split the ligand to the cache directory.
 #lig="../cenet_vs/4.smina_docking/smina_out/batch_6/CID-9591264-inactives.smina_out.pdbqt.gz"
