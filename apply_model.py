@@ -67,7 +67,6 @@ def load_example(
 
     return example
 
-
 # load in model -- from torch
 def load_model(
     model_path: str, smina_terms_mask_path: str, smina_term_scales_path: str
