@@ -206,12 +206,9 @@ def full_term_description(term: str) -> str:
         _j = get_numeric_val(term, "_j")
         _s = get_numeric_val(term, "_s")
         _ = get_numeric_val(term, "_\^")
-
         desc = f"vdw: Lennard-Jones exponents (AutoDock 4): {i}, {_j}; smoothing: {_s}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
-
     elif term.startswith("non_dir_h_bond("):
         desc = f"non-directional hydrogen bond (vina): good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see PMC3041641"
-
     elif term.startswith("non_dir_anti_h_bond_quadratic"):
         desc = f"mimics repulsion between polar atoms that can't hydrogen bond: offset: {o}; distance cutoff: {_c}; see ???"
     elif term.startswith("non_dir_h_bond_lj("):
@@ -224,7 +221,6 @@ def full_term_description(term: str) -> str:
     elif term.startswith("ad4_solvation("):
         dsig = get_numeric_val(term, "d-sigma")
         sq = get_numeric_val(term, "_s/q")
-
         desc = f"desolvation (AutoDock 4): d-sigma: {dsig}; _s/q: {sq}; distance cutoff: {_c}; see PMID17274016"
     elif term.startswith("electrostatic("):
         i = get_numeric_val(term, "i")
