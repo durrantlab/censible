@@ -301,7 +301,8 @@ for lig_path in args.ligpath:
     )
 
     terminal_output += f"receptor\t{args.recpath}\n"
-    terminal_output += f"ligand\t{lig_path}\n\n"
+    terminal_output += f"ligand\t{lig_path}\n"
+    terminal_output += f"model\t{args.model_dir}\n\n"
     terminal_output += f"predicted_affinity\t{str(round(float(predicted_affinity), 5))}\n"
 
     print(terminal_output)
