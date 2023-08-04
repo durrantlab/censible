@@ -7,7 +7,9 @@ posenum=${2}
 
 mkdir -p scratch
 
-recep="/mnt/Data/jdurrant/cenet_vs/hxk4/3.receptor/receptor.pdb"
+#recep="/mnt/Data/jdurrant/cenet_vs/hxk4/3.receptor/receptor.pdb"
+recep="/mnt/Data/jdurrant/cenet_vs/hiv_integrase_dude.remember_variants_still_bad.example_good_smina_bad_cenet/3.receptor/receptor.pdb"
+
 
 # Split the ligand to the cache directory.
 #lig="../cenet_vs/4.smina_docking/smina_out/batch_6/CID-9591264-inactives.smina_out.pdbqt.gz"
