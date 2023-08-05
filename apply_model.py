@@ -46,7 +46,7 @@ def load_example(
     all_smina_computed_terms = [t for t in all_smina_computed_terms if is_numeric(t)]
     all_smina_computed_terms_str = " ".join(all_smina_computed_terms)
 
-    smina_outfile = "types_file_cen." + str(random.randint(0, 1000000000)) + ".tmp"
+    smina_outfile = f"types_file_cen.{random.randint(0, 1000000000)}.tmp"
     with open(smina_outfile, "w") as smina_out_f:
         smina_out_f.write(
             f"{all_smina_computed_terms_str} "
@@ -162,7 +162,7 @@ def test_apply(example_data, smina_terms_mask, smina_norm_factors_masked, model)
 def get_numeric_val(s: str, varname: str) -> str:
     # v is a number, so only digits, +/-, and .
     num_regex = "([e0-9\.\+\-]+)"
-    v = re.search(varname + "=" + num_regex, s)
+    v = re.search(f"{varname}={num_regex}", s)
     v = v.group(1) if v is not None else "?"
     return v
 
@@ -187,59 +187,57 @@ def full_term_description(term: str) -> str:
         # Looks like atom_type_gaussian(t1=AliphaticCarbonXSHydrophobe,t2=AliphaticCarbonXSNonHydrophobe,o=0,_w=1,_c=8)
         # Extract t1, t2, o, _w, _c using regex.
         t1 = re.search("t1=(.*?),", term)
-        t1 = t1.group(1) if t1 is not None else None
+        t1 = t1[1] if t1 is not None else None
 
         t2 = re.search("t2=(.*?),", term)
-        t2 = t2.group(1) if t2 is not None else None
+        t2 = t2[1] if t2 is not None else None
 
-        desc = f"adjacent atoms: {t1}-{t2}; offset: {o}; gaussian width: {_w}; distance cutoff: {_c}"
+        return f"adjacent atoms: {t1}-{t2}; offset: {o}; gaussian width: {_w}; distance cutoff: {_c}"
     elif term.startswith("gauss("):
-        desc = f"sterics (vina): offset: {o}; gaussian width: {_w}; distance cutoff: {_c}; see PMC3041641"
+        return f"sterics (vina): offset: {o}; gaussian width: {_w}; distance cutoff: {_c}; see PMC3041641"
     elif term.startswith("repulsion("):
-        desc = f"repulsion (vina): offset: {o}; distance cutoff: {_c}; see PMC3041641"
+        return f"repulsion (vina): offset: {o}; distance cutoff: {_c}; see PMC3041641"
     elif term.startswith("hydrophobic("):
-        desc = f"hydrophobic (vina): good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see PMC3041641"
+        return f"hydrophobic (vina): good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see PMC3041641"
     elif term.startswith("non_hydrophobic("):
-        desc = f"non-hydrophobic: good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see ???"
+        return f"non-hydrophobic: good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see ???"
     elif term.startswith("vdw("):
         i = get_numeric_val(term, "i")
         _j = get_numeric_val(term, "_j")
         _s = get_numeric_val(term, "_s")
         _ = get_numeric_val(term, "_\^")
-        desc = f"vdw: Lennard-Jones exponents (AutoDock 4): {i}, {_j}; smoothing: {_s}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
+        return f"vdw: Lennard-Jones exponents (AutoDock 4): {i}, {_j}; smoothing: {_s}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
     elif term.startswith("non_dir_h_bond("):
-        desc = f"non-directional hydrogen bond (vina): good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see PMC3041641"
+        return f"non-directional hydrogen bond (vina): good-distance cutoff: {g}; bad-distance cutoff: {_b}; distance cutoff: {_c}; see PMC3041641"
     elif term.startswith("non_dir_anti_h_bond_quadratic"):
-        desc = f"mimics repulsion between polar atoms that can't hydrogen bond: offset: {o}; distance cutoff: {_c}; see ???"
+        return f"mimics repulsion between polar atoms that can't hydrogen bond: offset: {o}; distance cutoff: {_c}; see ???"
     elif term.startswith("non_dir_h_bond_lj("):
         _ = get_numeric_val(term, "_\^")
-        desc = f"10-12 Lennard-Jones potential (AutoDock 4) : {o}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
+        return f"10-12 Lennard-Jones potential (AutoDock 4) : {o}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
     elif term.startswith("acceptor_acceptor_quadratic("):
-        desc = "quadratic potential (see repulsion) between two acceptor atoms: offset: {o}; distance cutoff: {_c}; see ???"
+        return "quadratic potential (see repulsion) between two acceptor atoms: offset: {o}; distance cutoff: {_c}; see ???"
     elif term.startswith("donor_donor_quadratic("):
-        desc = "quadratic potential (see repulsion) between two donor atoms: offset: {o}; distance cutoff: {_c}; see ???"
+        return "quadratic potential (see repulsion) between two donor atoms: offset: {o}; distance cutoff: {_c}; see ???"
     elif term.startswith("ad4_solvation("):
         dsig = get_numeric_val(term, "d-sigma")
         sq = get_numeric_val(term, "_s/q")
-        desc = f"desolvation (AutoDock 4): d-sigma: {dsig}; _s/q: {sq}; distance cutoff: {_c}; see PMID17274016"
+        return f"desolvation (AutoDock 4): d-sigma: {dsig}; _s/q: {sq}; distance cutoff: {_c}; see PMID17274016"
     elif term.startswith("electrostatic("):
         i = get_numeric_val(term, "i")
         _ = get_numeric_val(term, "_\^")
-        desc = f"electrostatics (AutoDock 4): distance exponent: {i}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
+        return f"electrostatics (AutoDock 4): distance exponent: {i}; cap: {_}; distance cutoff: {_c}; see PMID17274016"
     elif term == "num_heavy_atoms":
-        desc = "number of heavy atoms"
+        return "number of heavy atoms"
     elif term == "num_tors_add":
-        desc = "loss of torsional entropy upon binding (AutoDock 4); see PMID17274016"
+        return "loss of torsional entropy upon binding (AutoDock 4); see PMID17274016"
     elif term == "num_hydrophobic_atoms":
-        desc = "number of hydrophobic atoms"
+        return "number of hydrophobic atoms"
     elif term == "ligand_length":
-        desc = "lenght of the ligand"
-    elif term in ["num_tors_sqr", "num_tors_sqrt"]:
-        desc = "meaning uncertain"  # TODO: Ask David?
+        return "lenght of the ligand"
+    elif term in {"num_tors_sqr", "num_tors_sqrt"}:
+        return "meaning uncertain"  # TODO: ask David
     else:
-        desc = "error: unknown term"
-
-    return desc
+        return "error: unknown term"
 
 
 # run the model on test example
@@ -308,7 +306,7 @@ for lig_path in args.ligpath:
     print(terminal_output)
 
     if args.out != "":
-        print("See " + args.out + " for predicted weights and contributions.")
+        print(f"See {args.out} for predicted weights and contributions.")
     else:
         print("WARNING: No output file specified (--out). Not saving weights and contributions.")
 
