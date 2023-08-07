@@ -12,6 +12,14 @@ def preprocess(termtypes: str):
     Args:
         termtypes: A string representing the path to the termtypes file. Can be
             'all', 'smina', or 'gaussian'.
+
+    Returns:
+        A tuple containing:
+            which_precalc_terms_to_keep: A list of integers representing the
+                indices of the terms to keep.
+            term_names: A list of strings representing the names of the terms.
+            precalc_term_scales: A list of floats representing the scale factors
+                for the terms.
     """
 
     # Some atomic interactions are nonexistent or rare and should be ignored.
@@ -59,6 +67,8 @@ def preprocess(termtypes: str):
 
     precalc_term_scales = normalize_terms(all_terms, which_precalc_terms_to_keep)
 
+    import pdb; pdb.set_trace()
+
     return which_precalc_terms_to_keep, term_names, precalc_term_scales
 
 
@@ -67,7 +77,7 @@ def remove_rare_terms(
     termtypes: str,
     term_names: np.ndarray,
     which_precalc_terms_to_keep: np.ndarray = None,
-):
+) -> np.ndarray:
     """Removes rare terms from the data.
     
     Args:
@@ -78,6 +88,9 @@ def remove_rare_terms(
             terms.
         which_precalc_terms_to_keep: A boolean array representing which terms
             to keep. If None, then it will be created rather than updated.
+
+    Returns:
+        A boolean array representing which terms to keep.
     """
 
     global RARE_TERM_RATIO_CUTOFF
@@ -132,18 +145,21 @@ def remove_rare_terms(
     return which_precalc_terms_to_keep
 
 
-def normalize_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray):
+def normalize_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray) -> torch.Tensor:
     """Normalizes the terms so that they are between 0 and 1.
     
     Args:
         all_terms: A 2D numpy array representing all the terms for all examples.
         which_precalc_terms_to_keep: A boolean array representing which terms
             to keep.
+    
+    Returns:
+        A 1D tensor representing the scales for each term.
     """
 
     MAX_VAL_AFTER_NORM = 1.0
 
-    # Normalize the columns so the values go between 0 and 1.
+    # Scales will normalize values when multipled.
     precalc_term_scales = np.zeros(all_terms.shape[1])
     for i in range(all_terms.shape[1]):
         col = all_terms[:, i]
@@ -152,10 +168,6 @@ def normalize_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarr
 
         if max_abs > 0:
             precalc_term_scales[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
-
-    import pdb
-
-    pdb.set_trace()
 
     # Save factors
     # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
