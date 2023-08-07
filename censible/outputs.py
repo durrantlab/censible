@@ -219,6 +219,7 @@ def save_outputs(
     """
 
     outdir = _get_output_dir(params)
+    report_subdir = f"{outdir}report/"
 
     # Save the model
     torch.save(model.state_dict(), f"{outdir}model.pt")
@@ -227,11 +228,11 @@ def save_outputs(
 
     # Save a boolean list of which precalculated terms are used in this model
     np.save(f"{outdir}which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
-    with open(f"{outdir}report/which_precalc_terms_to_keep.txt", "w") as f:
+    with open(f"{report_subdir}which_precalc_terms_to_keep.txt", "w") as f:
         f.write(str(which_precalc_terms_to_keep))
 
     # Save the names of the retained terms
-    with open(f"{outdir}report/term_names.txt", "w") as f:
+    with open(f"{report_subdir}term_names.txt", "w") as f:
         f.write(
             str(
                 [
@@ -244,12 +245,12 @@ def save_outputs(
 
     # Save the normalization factors applied to the retained precalculated terms.
     np.save(f"{outdir}precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
-    with open(f"{outdir}report/precalc_term_scales.txt", "w") as f:
+    with open(f"{report_subdir}precalc_term_scales.txt", "w") as f:
         f.write(str(precalc_term_scales_to_keep))
 
     # Save weights and predictions. TODO: Where is this used?
     np.save(
-        f"{outdir}report/weights_and_predictions.npy",
+        f"{report_subdir}weights_and_predictions.npy",
         np.hstack([np.array(coefs_predict_lst).squeeze(), results[:, None]]),
     )
     # np.save("predictions.npy",results)
@@ -263,18 +264,18 @@ def save_outputs(
         np.convolve(losses, np.ones(100) / 100, mode="valid"),
     )
     plt.ylim(0, 8)
-    plt.savefig(f"{outdir}report/loss_per_batch__train.png")
+    plt.savefig(f"{report_subdir}loss_per_batch__train.png")
 
     # Clear plot and start over
     plt.clf()
     plt.plot(pearsons)
-    plt.savefig(f"{outdir}report/pearsons_per_epoch__test.png")
+    plt.savefig(f"{report_subdir}pearsons_per_epoch__test.png")
 
     # Predictions vs. reality
     plt.clf()
     j = sns.jointplot(x=labels, y=results)
     plt.suptitle("R = %.2f" % pearsons[-1])
-    plt.savefig(f"{outdir}report/label_vs_predict_final__test.png")
+    plt.savefig(f"{report_subdir}label_vs_predict_final__test.png")
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
@@ -282,7 +283,7 @@ def save_outputs(
         coefs_predict_lst,
         which_precalc_terms_to_keep,
         term_names,
-        f"{outdir}report/",
+        report_subdir,
         gninatypes_filenames,
     )
 
@@ -290,12 +291,12 @@ def save_outputs(
         contributions_lst,
         which_precalc_terms_to_keep,
         term_names,
-        f"{outdir}report/",
+        report_subdir,
         gninatypes_filenames,
     )
 
     # Save params as json
-    with open(f"{outdir}report/params.json", "w") as f:
+    with open(f"{report_subdir}params.json", "w") as f:
         json.dump(params, f, indent=4)
 
     # Save the term names
@@ -303,4 +304,4 @@ def save_outputs(
     #     f.write("\n".join(term_names[which_precalc_terms_to_keep]))
 
     # Save pearsons as csv
-    np.savetxt(f"{outdir}report/pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
+    np.savetxt(f"{report_subdir}pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
