@@ -1,4 +1,5 @@
 from typing import List
+from censible.data.get_data_paths import data_file_path
 import molgrid
 import torch
 import numpy as np
@@ -34,7 +35,8 @@ def preprocess(termtypes: str, data_dir: str):
     # because smina reorders the terms when it creates the vector for each
     # protein/ligand complex. So strange.
     term_names = []
-    for line in open(f"{data_dir}smina_ordered_terms.txt"):
+    smina_ordered_terms_path = data_file_path("smina_ordered_terms.txt")
+    for line in open(smina_ordered_terms_path):
         line = line.rstrip()
         term_names.append(line)
     term_names = np.array(term_names)

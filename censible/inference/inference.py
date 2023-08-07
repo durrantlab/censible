@@ -1,5 +1,6 @@
 import argparse
 import re
+from censible.data.get_data_paths import data_file_path
 import molgrid
 import subprocess
 import torch
@@ -127,9 +128,7 @@ def load_model(model_dir: str):
         os.path.dirname(os.path.realpath(__file__)) + os.sep + "custom_scoring.txt"
     )
 
-    smina_ordered_terms_path = (
-        os.path.dirname(os.path.realpath(__file__)) + os.sep + "smina_ordered_terms.txt"
-    )
+    smina_ordered_terms_path = data_file_path("smina_ordered_terms.txt")
     with open(smina_ordered_terms_path) as f:
         smina_ordered_terms_names = f.read().strip().split()
 
