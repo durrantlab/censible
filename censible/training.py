@@ -15,15 +15,16 @@ from censible.preprocess import remove_rare_terms
 
 
 def load_split(
-    types_filename: str, batch_size: int, is_training_set: bool = False
+    types_filename: str, batch_size: int, data_dir: str, is_training_set: bool = False
 ) -> tuple[molgrid.molgrid.ExampleProvider, Any]:
     """Loads the data from the types file .
     
     Args:
-        types_filename: A string representing the path to the types file.
-        batch_size: An integer representing the batch size.
-        is_training_set: A boolean representing whether the data is a training
-            set. Defaults to False.
+        types_filename (str): A string representing the path to the types file.
+        batch_size (int): An integer representing the batch size.
+        data_dir (str): A string representing the path to the data directory.
+        is_training_set (bool): A boolean representing whether the data is a
+            training set. Defaults to False.
 
     Returns:
         A tuple of the molgrid.ExampleProvider and the gninatypes filenames. If
@@ -37,7 +38,7 @@ def load_split(
         # It's a testing set, so there will be no shuffle. Keep track of the
         # gninatypes filenames for reporting.
         gninatypes_filenames = []
-        with open(types_filename, "r") as f:
+        with open(f"{data_dir}types_filename", "r") as f:
             for line in f:
                 receptor_file, ligand_file = line.strip().split()[-2:]
                 gninatypes_filenames.append((receptor_file, ligand_file))
@@ -47,8 +48,8 @@ def load_split(
         gninatypes_filenames = None
 
     kwargs = {
-        "ligmolcache": "lig.molcache2",
-        "recmolcache": "rec.molcache2",
+        "ligmolcache": f"{data_dir}/lig.molcache2",
+        "recmolcache": f"{data_dir}/rec.molcache2",
         "iteration_scheme": molgrid.IterationScheme.LargeEpoch,
     }
 
@@ -122,8 +123,9 @@ def train_single_fold(
     ## train_dataset.populate("all_cen.types")
 
     train_dataset, _ = load_split(
-        params["data_dir"] + "/" + params["prefix"] + ("train%d_cen.types" % params["fold_num"]),
+        params["prefix"] + ("train%d_cen.types" % params["fold_num"]),
         params["batch_size"],
+        params["data_dir"],
         is_training_set=True,
     )
 
@@ -136,7 +138,7 @@ def train_single_fold(
     # )
     # test_dataset.populate(params["prefix"] + ("test%d_cen.types" % params["fold_num"]))
     test_dataset, test_gninatypes_filenames = load_split(
-        params["data_dir"] + "/" + params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
+        params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
         1,
         is_training_set=False,
     )
