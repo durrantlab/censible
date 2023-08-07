@@ -36,7 +36,6 @@ for lig_path in args.ligpath:
         args.smina_exec_path,
         smina_terms_mask,
         smina_ordered_terms_names,
-        custom_scoring_path,
     )
 
     (
