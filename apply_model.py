@@ -216,9 +216,15 @@ def test_apply(
 
 
 def get_numeric_val(s: str, varname: str) -> str:
-    import pdb
-
-    pdb.set_trace()
+    """Given a string and a variable name, return the value of that variable.
+    
+    Args:
+        s (str): The string.
+        varname (str): The variable name.
+        
+    Returns:
+        str: The value of the variable.
+    """
 
     # v is a number, so only digits, +/-, and .
     num_regex = "([e0-9\.\+\-]+)"
