@@ -13,8 +13,16 @@ import random
 from CEN_model import CENet
 
 
-def is_numeric(s):
-    """Return a boolean representing if the string s is a numeric string."""
+def is_numeric(s: str) -> bool:
+    """Return a boolean representing if the string s is a numeric string.
+    
+    Args:
+        s (str): A string.
+        
+    Returns:
+        A boolean representing if the string s is a numeric string.
+    """
+
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
 
@@ -25,6 +33,8 @@ def load_example(
     smina_terms_mask,
     smina_ordered_terms_names,
 ):
+    import pdb; pdb.set_trace()
+
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
     cmd = f"{smina_exec_path} --custom_scoring {custom_scoring_path} --score_only -r {rec_path} -l {lig_path}"
@@ -71,6 +81,8 @@ def load_example(
 def load_model(
     model_path: str, smina_terms_mask_path: str, smina_term_scales_path: str
 ):
+    import pdb; pdb.set_trace()
+
     ### get the single_example_terms -- one set of smina computed terms
     # load normalization term data
     smina_terms_mask = np.load(smina_terms_mask_path)
@@ -104,6 +116,8 @@ def load_model(
 
 # apply model to test data
 def test_apply(example_data, smina_terms_mask, smina_norm_factors_masked, model):
+    import pdb; pdb.set_trace()
+
     smina_norm_factors_masked = torch.from_numpy(smina_norm_factors_masked).to("cuda")
 
     smina_terms_mask_trch = torch.from_numpy(smina_terms_mask).to("cuda")
@@ -160,6 +174,8 @@ def test_apply(example_data, smina_terms_mask, smina_norm_factors_masked, model)
 
 
 def get_numeric_val(s: str, varname: str) -> str:
+    import pdb; pdb.set_trace()
+
     # v is a number, so only digits, +/-, and .
     num_regex = "([e0-9\.\+\-]+)"
     v = re.search(f"{varname}={num_regex}", s)
@@ -168,6 +184,8 @@ def get_numeric_val(s: str, varname: str) -> str:
 
 
 def full_term_description(term: str) -> str:
+    import pdb; pdb.set_trace()
+
     # Given that making explainable scoring functions is the goal, good to
     # provide more complete description of the terms. This function tries to do
     # so semi-programatically.
@@ -242,6 +260,8 @@ def full_term_description(term: str) -> str:
 
 # run the model on test example
 def get_cmd_args():
+    import pdb; pdb.set_trace()
+    
     # Create argparser
     parser = argparse.ArgumentParser()
     parser.add_argument(

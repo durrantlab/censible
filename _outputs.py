@@ -18,15 +18,17 @@ def _weights_heatmap(
     """Saves a heatmap of the weights.
     
     Args:
-        coefs_predict_lst: A list of numpy arrays, where each numpy array
-            represents the weights of a model.
-        which_precalc_terms_to_keep: A numpy array of booleans indicating which
-            precalculated terms to keep.
-        termnames: A numpy array of strings, where each string represents the
-            name of a term in the precalculated terms.
-        save_dir: A string representing the directory to save the heatmap to.
-        gninatypes_filenames: A list of 2-tuples, where each 2-tuple represents
-            the gninatypes filenames for a protein and ligand, respectively.
+        coefs_predict_lst (list[np.ndarray]): A list of numpy arrays, where
+            each numpy array represents the weights of a model.
+        which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
+            indicating which precalculated terms to keep.
+        termnames (np.ndarray): A numpy array of strings, where each string
+            represents the name of a term in the precalculated terms.
+        save_dir (str): A string representing the directory to save the
+            heatmap to.
+        gninatypes_filenames (list[tuple[str, str]]): A list of 2-tuples, where
+            each 2-tuple represents the gninatypes filenames for a protein and
+            ligand, respectively.
     """
 
     # Save all weights
@@ -71,11 +73,11 @@ def _save_to_csv(f: Any, header: list[str], vals: list[list[Any]]):
     """Save ccweights to csv file, using the values in header as the column names
     
     Args:
-        f: A file-like object.
-        header: A list of strings, where each string represents the name of a
-            column.
-        vals: A list of lists with the values (rows). Can be combination of strings
-            and numbers.
+        f (Any): A file-like object.
+        header (list[str]): A list of strings, where each string represents
+            the name of a column.
+        vals (list[list[Any]]): A list of lists with the values (rows). Can be
+            combination of strings and numbers.
     """
 
     writer = csv.writer(f)
@@ -93,15 +95,17 @@ def _contributions_heatmap(
     """Saves a heatmap of the contributions.
     
     Args:
-        contributions_lst: A list of numpy arrays, where each numpy array
-            represents the contributions for a given example.
-        which_precalc_terms_to_keep: A numpy array of booleans indicating which
-            precalculated terms to keep.
-        termnames: A numpy array of strings, where each string represents the
-            name of a term in the precalculated terms.
-        save_dir: A string representing the directory to save the heatmap to.
-        gninatypes_filenames: A list of 2-tuples, where each 2-tuple represents
-            the gninatypes filenames for a protein and ligand, respectively.
+        contributions_lst (list[np.ndarray]): A list of numpy arrays, where
+            each numpy array represents the contributions for a given example.
+        which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
+            indicating which precalculated terms to keep.
+        termnames (np.ndarray): A numpy array of strings, where each string
+            represents the name of a term in the precalculated terms.
+        save_dir (str): A string representing the directory to save the heatmap
+            to.
+        gninatypes_filenames (list[tuple[str, str]]): A list of 2-tuples, where
+            each 2-tuple represents the gninatypes filenames for a protein and
+            ligand, respectively.
     """
 
     # save all contributions
@@ -152,26 +156,29 @@ def generate_outputs(
     """Generates outputs for the model.
     
     Args:
-        save_dir: A string representing the directory to save the outputs to.
-        losses: A list of floats, where each float represents the loss for a
-            batch.
-        labels: A numpy array of floats, where each float represents the label
-            (experimentally measured affinity) for a protein/ligand complex.
-        results: A numpy array of floats, where each float represents the
-            prediction for a protein/ligand complex.
-        gninatypes_filenames: A list of 2-tuples, where each 2-tuple represents
-            the gninatypes filenames for a protein and ligand, respectively.
-        pearsons: A list of floats, where each float represents the Pearson's
-            correlation coefficient for a test set.
-        coefs_predict_lst: A list of numpy arrays, where each numpy array
-            represents the coefficients for a given example.
-        contributions_lst: A list of numpy arrays, where each numpy array
-            represents the contributions for a given example.
-        which_precalc_terms_to_keep: A numpy array of booleans indicating which
-            precalculated terms to keep.
-        termnames: A numpy array of strings, where each string represents the
-            name of a term in the precalculated terms.
-        params: A Params object.
+        save_dir (str): A string representing the directory to save the outputs
+            to.
+        losses (list[float]): A list of floats, where each float represents the
+            loss for a batch.
+        labels (np.ndarray): A numpy array of floats, where each float
+            represents the label (experimentally measured affinity) for a
+            protein/ligand complex.
+        results (np.ndarray): A numpy array of floats, where each float
+            represents the prediction for a protein/ligand complex.
+        gninatypes_filenames (list[tuple[str, str]]): A list of 2-tuples, where
+            each 2-tuple represents the gninatypes filenames for a protein and
+            ligand, respectively.
+        pearsons (list[float]): A list of floats, where each float represents
+            the Pearson's correlation coefficient for a test set.
+        coefs_predict_lst (list[np.ndarray]): A list of numpy arrays, where
+            each numpy array represents the coefficients for a given example.
+        contributions_lst (list[np.ndarray]): A list of numpy arrays, where
+            each numpy array represents the contributions for a given example.
+        which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
+            indicating which precalculated terms to keep.
+        termnames (np.ndarray): A numpy array of strings, where each string
+            represents the name of a term in the precalculated terms.
+        params (dict): A Params object.
     """
 
     # Losses per batch

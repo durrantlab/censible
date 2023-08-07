@@ -10,8 +10,8 @@ def preprocess(termtypes: str):
     """Preprocesses the data.
     
     Args:
-        termtypes: A string representing the path to the termtypes file. Can be
-            'all', 'smina', or 'gaussian'.
+        termtypes (str): A string representing the path to the termtypes file.
+            Can be 'all', 'smina', or 'gaussian'.
 
     Returns:
         A tuple containing:
@@ -80,13 +80,15 @@ def remove_rare_terms(
     """Removes rare terms from the data.
     
     Args:
-        all_terms: A 2D numpy array representing all the terms for all examples.
-        termtypes: A string representing the path to the termtypes file. Can be
-            'all', 'smina', or 'gaussian'.
-        term_names: A numpy array of strings representing the names of all the
-            terms.
-        which_precalc_terms_to_keep: A boolean array representing which terms
-            to keep. If None, then it will be created rather than updated.
+        all_terms (np.ndarray): A 2D numpy array representing all the terms for
+            all examples.
+        termtypes (str): A string representing the path to the termtypes file.
+            Can be 'all', 'smina', or 'gaussian'.
+        term_names (np.ndarray): A numpy array of strings representing the 
+            names of all the terms.
+        which_precalc_terms_to_keep (np.ndarray): A boolean array representing
+            which terms to keep. If None, then it will be created rather than
+            updated.
 
     Returns:
         A boolean array representing which terms to keep.
@@ -151,9 +153,10 @@ def get_precalc_term_scales(
     multipled.
     
     Args:
-        all_terms: A 2D numpy array representing all the terms for all examples.
-        which_precalc_terms_to_keep: A boolean array representing which terms
-            to keep.
+        all_terms (np.ndarray): A 2D numpy array representing all the terms for
+            all examples.
+        which_precalc_terms_to_keep (np.ndarray): A boolean array representing
+            which terms to keep.
     
     Returns:
         A 1D tensor representing the scales for each term.

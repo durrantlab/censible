@@ -11,8 +11,18 @@ from torch.nn import init
 from _preprocess import remove_rare_terms
 
 
-def load_split(types_filename: str, batch_size: int, is_training_set: bool = False):
-    import pdb; pdb.set_trace()
+def load_split(
+    types_filename: str, batch_size: int, is_training_set: bool = False
+) -> molgrid.MolGridDataGenerator:
+    """Loads the data from the types file and returns a
+    molgrid.MolGridDataGenerator.
+    
+    Args:
+        types_filename: A string representing the path to the types file.
+        batch_size: An integer representing the batch size.
+        is_training_set: A boolean representing whether the data is a training
+            set. Defaults to False.
+    """
 
     # You need to keep track of the ligand and receptor filenames
     if not is_training_set:
@@ -58,12 +68,30 @@ def load_split(types_filename: str, batch_size: int, is_training_set: bool = Fal
 
 
 def train_single_fold(
-    Net, which_precalc_terms_to_keep, params, term_names, precalc_term_scales
-):
-    import pdb; pdb.set_trace()
+    Net: "CEN_model.CENet",
+    which_precalc_terms_to_keep: np.ndarray,
+    params: dict,
+    term_names: np.ndarray,
+    precalc_term_scales: torch.Tensor,
+) -> tuple:
+    """Train a single fold of the CEN model.
+    
+    Args:
+        Net (CEN_model.CENet): The CEN model.
+        which_precalc_terms_to_keep (np.ndarray): A boolean array indicating
+            which terms to keep.
+        params (dict): A dictionary of parameters.
+        term_names (np.ndarray): A numpy array of term names.
+        precalc_term_scales (torch.Tensor): A tensor of term scales.
+
+    Returns:
+        A tuple containing information about the results, etc.
+    """
+
+    # TODO: Divide this monster function into subfunctions
+
     # The main object. See
     # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
-    # TODO: No grid_center parameter here?
     gmaker = molgrid.GridMaker()  # use defaults
 
     # Create a training dataset, which has access to all receptor and ligand grids.
@@ -298,9 +326,9 @@ class View(nn.Module):
         return input.view(*self.shape)
 
 
-def weights_init(m):
-    import pdb
-    pdb.set_trace()
+def weights_init(m: "AvgPool3d"):
+    """Initialize weights of the model."""
+
     if isinstance(m, (nn.Conv3d, nn.Linear)):
         init.xavier_uniform_(m.weight.data)
         init.constant_(m.bias.data, 0)

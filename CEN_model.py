@@ -8,9 +8,10 @@ from _training import View
 
 
 class CENet(nn.Module):
-    """Default 2018, but final layer generates coefficients for terms"""
+    """Default 2018, but final layer generates coefficients for terms."""
 
     def __init__(self, dims, numterms=None):
+        import pdb; pdb.set_trace()
         super(CENet, self).__init__()
         self.modules = []
         nchannels = dims[0]
@@ -53,6 +54,7 @@ class CENet(nn.Module):
         self.add_module("last_fc", self.fc)
 
     def forward(self, batch, precalculated_terms):
+        import pdb; pdb.set_trace()
         # should approximate the affinity of the receptor/ligand pair
 
         for layer in self.modules:
