@@ -120,7 +120,7 @@ def train_single_fold(
     # So the training process puts no constraints on those terms, inevitably
     # leading to bad results when evaluating on the test set.
     tmp_labels = []
-    for batch_index, train_batch in enumerate(train_dataset):
+    for train_batch in train_dataset:
         train_batch.extract_labels(all_labels_for_training)
         tmp_labels.append(all_labels_for_training.cpu().numpy()[:, 1:])
     train_dataset.reset()

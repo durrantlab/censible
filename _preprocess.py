@@ -6,8 +6,14 @@ import numpy as np
 RARE_TERM_RATIO_CUTOFF = 0.01
 
 
-def preprocess(termtypes):
-    import pdb; pdb.set_trace()
+def preprocess(termtypes: str):
+    """Preprocesses the data.
+    
+    Args:
+        termtypes: A string representing the path to the termtypes file. Can be
+            'all', 'smina', or 'gaussian'.
+    """
+
     # Some atomic interactions are nonexistent or rare and should be ignored.
     # Calculate statistics for each term.
 
@@ -32,7 +38,8 @@ def preprocess(termtypes):
     all_examples.populate("all_cen.types")
 
     # Get the experimentally measured affinities as well as the other terms.
-    # all_affinities = []  # NOTE: Affinity not used here. Data reloaded (per fold) in _training.py.
+    # all_affinities = []  # NOTE: Affinity not used here. Data reloaded (per
+    # fold) in _training.py.
     all_terms = []
     for batch in all_examples:
         example = batch[0]  # batch size one
@@ -58,10 +65,21 @@ def preprocess(termtypes):
 def remove_rare_terms(
     all_terms: np.ndarray,
     termtypes: str,
-    term_names: List[str],
+    term_names: np.ndarray,
     which_precalc_terms_to_keep: np.ndarray = None,
 ):
-    import pdb; pdb.set_trace()
+    """Removes rare terms from the data.
+    
+    Args:
+        all_terms: A 2D numpy array representing all the terms for all examples.
+        termtypes: A string representing the path to the termtypes file. Can be
+            'all', 'smina', or 'gaussian'.
+        term_names: A numpy array of strings representing the names of all the
+            terms.
+        which_precalc_terms_to_keep: A boolean array representing which terms
+            to keep. If None, then it will be created rather than updated.
+    """
+
     global RARE_TERM_RATIO_CUTOFF
 
     # If which_precalc_terms_to_keep is not provided, then it is calculated here. All trues.
@@ -108,21 +126,20 @@ def remove_rare_terms(
         )
         which_precalc_terms_to_keep[idx] = False
 
-    print(
-        "Number of terms retained: " + str(np.sum(which_precalc_terms_to_keep == True))
-    )
-    print(
-        "Number of terms removed: " + str(np.sum(which_precalc_terms_to_keep == False))
-    )
+    print(f"Number of terms retained: {np.sum(which_precalc_terms_to_keep == True)}")
+    print(f"Number of terms removed: {np.sum(which_precalc_terms_to_keep == False)}")
 
     return which_precalc_terms_to_keep
 
 
-def normalize_terms(all_terms, which_precalc_terms_to_keep):
-    # TODO: Need to implement ability tosave values in factors and load them
-    # back in for inference.
-
-    import pdb; pdb.set_trace()
+def normalize_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray):
+    """Normalizes the terms so that they are between 0 and 1.
+    
+    Args:
+        all_terms: A 2D numpy array representing all the terms for all examples.
+        which_precalc_terms_to_keep: A boolean array representing which terms
+            to keep.
+    """
 
     MAX_VAL_AFTER_NORM = 1.0
 
@@ -135,6 +152,10 @@ def normalize_terms(all_terms, which_precalc_terms_to_keep):
 
         if max_abs > 0:
             precalc_term_scales[i] = MAX_VAL_AFTER_NORM * 1.0 / max_abs
+
+    import pdb
+
+    pdb.set_trace()
 
     # Save factors
     # np.save("batch_labels.jdd.npy", batch_labels[:, 1:][:, goodfeatures])
