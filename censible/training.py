@@ -1,7 +1,9 @@
+import argparse
 from typing import Any
 import molgrid
 import torch
 import torch.optim as optim
+import os
 
 # from _debug import grid_channel_to_xyz_file
 import numpy as np
@@ -338,3 +340,95 @@ def weights_init(m: "AvgPool3d"):
     if isinstance(m, (nn.Conv3d, nn.Linear)):
         init.xavier_uniform_(m.weight.data)
         init.constant_(m.bias.data, 0)
+
+def get_args() -> dict:
+    """Get arguments from the command line.
+    
+    Returns:
+        args: A dictionary of the arguments from the command line.
+    """
+
+    params_info = [
+        {
+            "name": "epochs",
+            "val": 250,  # 400,
+            "description": "Number of epochs to train for.",
+        },
+        {"name": "fold_num", "val": 0, "description": "Which fold to train on."},
+        {"name": "batch_size", "val": 25, "description": "Batch size."},
+        {"name": "lr", "val": 0.01, "description": "Learning rate."},
+        {
+            "name": "step_size",
+            "val": 80,
+            "description": "Step size for learning rate decay.",
+        },
+        {
+            "name": "prefix",
+            "val": "randomsplit",
+            "description": "Prefix for the input types files.",  # TODO: Correct description?
+        },
+        {
+            "name": "termtypes",
+            "val": "all",
+            "description": "Which terms to use. Can be 'all', 'smina', or 'gaussian'.",
+        },
+        {
+            "name": "data_dir",
+            "val": "./prepare_data/",
+            "description": "Directory where the data is stored.",
+        },
+        {
+            "name": "out_dir",
+            "val": "./outputs/",
+            "description": "Directory where the outputs are saved.",
+        }
+    ]
+
+    # Create argparser with same args as params
+    parser = argparse.ArgumentParser()
+    for value in params_info:
+        parser.add_argument(
+            "--" + value["name"],
+            type=type(value["val"]),
+            default=value["val"],
+            help=value["description"] + " Default: " + str(value["val"]),
+        )
+    args = parser.parse_args()
+    params = vars(args)
+
+    import pdb; pdb.set_trace()
+
+    return params
+
+def validate_params(params: dict) -> dict:
+    """Validate the parameters. Also makes slight adjustments to ensure all
+    works properly.
+    
+    Args:
+        params: A dictionary of the parameters.
+        
+    Returns:
+        params: The validated parameters.
+    """
+
+    # Make sure termtypes is valid
+    if params["termtypes"] not in ["all", "smina", "gaussian"]:
+        raise ValueError("termtypes must be 'all', 'smina', or 'gaussian'")
+    
+    # All directories should be absolute
+    params["data_dir"] = os.path.abspath(params["data_dir"])
+    params["out_dir"] = os.path.abspath(params["out_dir"])
+
+    # The data_dir must exist
+    if not os.path.isdir(params["data_dir"]):
+        raise ValueError("data_dir does not exist")
+    
+    # Note that out_dir will be created later, so doesn't need to exist at this
+    # point.
+    
+    print(params)
+
+    return params
+
+
+

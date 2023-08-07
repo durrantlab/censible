@@ -6,12 +6,13 @@ import os
 import datetime
 import json
 import csv
+import torch
 
 
 def _weights_heatmap(
     coefs_predict_lst: list[np.ndarray],
     which_precalc_terms_to_keep: np.ndarray,
-    termnames: np.ndarray,
+    term_names: np.ndarray,
     save_dir: str,
     gninatypes_filenames: list[tuple[str, str]],
 ):
@@ -22,7 +23,7 @@ def _weights_heatmap(
             each numpy array represents the weights of a model.
         which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
             indicating which precalculated terms to keep.
-        termnames (np.ndarray): A numpy array of strings, where each string
+        term_names (np.ndarray): A numpy array of strings, where each string
             represents the name of a term in the precalculated terms.
         save_dir (str): A string representing the directory to save the
             heatmap to.
@@ -33,7 +34,7 @@ def _weights_heatmap(
 
     # Save all weights
     header = ["protein_gnina_types", "ligand_gnina_types"] + [
-        h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]
+        h.replace(",", "_") for h in term_names[which_precalc_terms_to_keep]
     ]
     ccweights = np.array(coefs_predict_lst)
     ccweights = np.reshape(ccweights, (ccweights.shape[0], -1)).tolist()
@@ -88,7 +89,7 @@ def _save_to_csv(f: Any, header: list[str], vals: list[list[Any]]):
 def _contributions_heatmap(
     contributions_lst: list[np.ndarray],
     which_precalc_terms_to_keep: np.ndarray,
-    termnames: np.ndarray,
+    term_names: np.ndarray,
     save_dir: str,
     gninatypes_filenames: list[tuple[str, str]],
 ):
@@ -99,7 +100,7 @@ def _contributions_heatmap(
             each numpy array represents the contributions for a given example.
         which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
             indicating which precalculated terms to keep.
-        termnames (np.ndarray): A numpy array of strings, where each string
+        term_names (np.ndarray): A numpy array of strings, where each string
             represents the name of a term in the precalculated terms.
         save_dir (str): A string representing the directory to save the heatmap
             to.
@@ -110,7 +111,7 @@ def _contributions_heatmap(
 
     # save all contributions
     header = ["protein_gnina_types", "ligand_gnina_types"] + [
-        h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]
+        h.replace(",", "_") for h in term_names[which_precalc_terms_to_keep]
     ]
 
     # Save ccweights to csv file, using the values in header as the column names
@@ -139,9 +140,43 @@ def _contributions_heatmap(
     plt.ylabel("Prot/Lig Complexes")
     plt.savefig(f"{save_dir}a_few_contributions.png")
 
+def _get_output_dir(params: dict) -> str:
+    """Gets the output directory for the model.
+    
+    Args:
+        params (dict): A dictionary of parameters.
+    
+    Returns:
+        str: A string representing the output directory for the model.
+    """
 
-def generate_outputs(
-    save_dir: str,
+    # Get the output directory, using default if necessary
+    outdir = params.get("out_dir", "./outputs/")
+
+    # If directory exists, make sure it is a directory
+    if os.path.exists(outdir) and not os.path.isdir(outdir):
+        raise ValueError(f"outdir {outdir} is not a directory")
+
+    # Create the directory if it doesn't exist
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    # Get the current date and time as a string, in a format that can be a filename
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
+
+    # Define and create the save subdirectory
+    outdir = f"{outdir}/{now_str}/"
+    os.mkdir(outdir)
+
+    # Make report subdirectory
+    report_subdir = f"{outdir}/report/"
+    os.mkdir(report_subdir)
+
+    return outdir
+
+def save_outputs(
+    model: "CENet",
     losses: list[float],
     labels: np.ndarray,  # Numeric labels
     results: np.ndarray,  # Predictions
@@ -150,14 +185,14 @@ def generate_outputs(
     coefs_predict_lst: list[np.ndarray],
     contributions_lst: list[np.ndarray],
     which_precalc_terms_to_keep: np.ndarray,
-    termnames: np.ndarray,
+    precalc_term_scales_to_keep: np.ndarray,
+    term_names: np.ndarray,
     params: dict,
 ):
     """Generates outputs for the model.
     
     Args:
-        save_dir (str): A string representing the directory to save the outputs
-            to.
+        model (CENet): A CENet model to save.
         losses (list[float]): A list of floats, where each float represents the
             loss for a batch.
         labels (np.ndarray): A numpy array of floats, where each float
@@ -176,10 +211,47 @@ def generate_outputs(
             each numpy array represents the contributions for a given example.
         which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
             indicating which precalculated terms to keep.
-        termnames (np.ndarray): A numpy array of strings, where each string
+        precalc_term_scales_to_keep (np.ndarray): A numpy array of floats,
+            where each float represents the scale of a precalculated term.
+        term_names (np.ndarray): A numpy array of strings, where each string
             represents the name of a term in the precalculated terms.
         params (dict): A Params object.
     """
+
+    outdir = _get_output_dir(params)
+
+    # Save the model
+    torch.save(model.state_dict(), f"{outdir}model.pt")
+
+    # Save a boolean list of which precalculated terms are used in this model
+    np.save(f"{outdir}which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
+    with open(f"{outdir}report/which_precalc_terms_to_keep.txt", "w") as f:
+        f.write(str(which_precalc_terms_to_keep))
+
+    # Save the names of the retained terms
+    with open(f"{outdir}report/term_names.txt", "w") as f:
+        f.write(
+            str(
+                [
+                    term_names[i]
+                    for i in range(len(term_names))
+                    if which_precalc_terms_to_keep[i]
+                ]
+            )
+        )
+
+    # Save the normalization factors applied to the retained precalculated terms.
+    np.save(f"{outdir}precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
+    with open(f"{outdir}report/precalc_term_scales.txt", "w") as f:
+        f.write(str(precalc_term_scales_to_keep))
+
+    # Save weights and predictions. TODO: Where is this used?
+    np.save(
+        f"{outdir}report/weights_and_predictions.npy",
+        np.hstack([np.array(coefs_predict_lst).squeeze(), results[:, None]]),
+    )
+    # np.save("predictions.npy",results)
+
 
     # Losses per batch
     plt.plot(losses)
@@ -189,44 +261,44 @@ def generate_outputs(
         np.convolve(losses, np.ones(100) / 100, mode="valid"),
     )
     plt.ylim(0, 8)
-    plt.savefig(f"{save_dir}loss_per_batch__train.png")
+    plt.savefig(f"{outdir}loss_per_batch__train.png")
 
     # Clear plot and start over
     plt.clf()
     plt.plot(pearsons)
-    plt.savefig(f"{save_dir}pearsons_per_epoch__test.png")
+    plt.savefig(f"{outdir}pearsons_per_epoch__test.png")
 
     # Predictions vs. reality
     plt.clf()
     j = sns.jointplot(x=labels, y=results)
     plt.suptitle("R = %.2f" % pearsons[-1])
-    plt.savefig(f"{save_dir}label_vs_predict_final__test.png")
+    plt.savefig(f"{outdir}label_vs_predict_final__test.png")
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
     _weights_heatmap(
         coefs_predict_lst,
         which_precalc_terms_to_keep,
-        termnames,
-        save_dir,
+        term_names,
+        outdir,
         gninatypes_filenames,
     )
 
     _contributions_heatmap(
         contributions_lst,
         which_precalc_terms_to_keep,
-        termnames,
-        save_dir,
+        term_names,
+        outdir,
         gninatypes_filenames,
     )
 
     # Save params as json
-    with open(f"{save_dir}params.json", "w") as f:
+    with open(f"{outdir}params.json", "w") as f:
         json.dump(params, f, indent=4)
 
     # Save the term names
-    # with open(save_dir + "termnames.txt", "w") as f:
-    #     f.write("\n".join(termnames[which_precalc_terms_to_keep]))
+    # with open(save_dir + "term_names.txt", "w") as f:
+    #     f.write("\n".join(term_names[which_precalc_terms_to_keep]))
 
     # Save pearsons as csv
-    np.savetxt(f"{save_dir}pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
+    np.savetxt(f"{outdir}pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
