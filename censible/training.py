@@ -74,7 +74,7 @@ def load_split(
 
 
 def train_single_fold(
-    Net: "CEN_model.CENet",
+    Net: "CENet",
     which_precalc_terms_to_keep: np.ndarray,
     params: dict,
     term_names: np.ndarray,
@@ -83,7 +83,7 @@ def train_single_fold(
     """Train a single fold of the CEN model.
     
     Args:
-        Net (CEN_model.CENet): The CEN model.
+        Net (CENet): The CEN model.
         which_precalc_terms_to_keep (np.ndarray): A boolean array indicating
             which terms to keep.
         params (dict): A dictionary of parameters.
