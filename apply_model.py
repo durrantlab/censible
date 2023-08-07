@@ -10,7 +10,7 @@ import os
 import re
 import random
 
-from CEN_model import CENet
+from censible.CEN_model import CENet
 
 
 def is_numeric(s: str) -> bool:

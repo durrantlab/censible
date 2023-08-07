@@ -9,7 +9,7 @@ from scipy.stats import pearsonr
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
-from _preprocess import remove_rare_terms
+from censible.preprocess import remove_rare_terms
 
 
 def load_split(

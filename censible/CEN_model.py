@@ -4,7 +4,7 @@ import torch.optim as optim
 # from _debug import grid_channel_to_xyz_file
 import torch.nn as nn
 import torch.nn.functional as F
-from _training import View
+from censible.training import View
 
 
 class CENet(nn.Module):

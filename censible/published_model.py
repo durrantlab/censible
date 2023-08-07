@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from _training import View
+from censible.training import View
 
 
 class Net(nn.Module):

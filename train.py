@@ -1,5 +1,5 @@
-from _training import train_single_fold
-from _outputs import generate_outputs
+from censible.training import train_single_fold
+from censible.outputs import generate_outputs
 import numpy as np
 import argparse
 import torch
@@ -9,8 +9,8 @@ import datetime
 # R, so we are pretty close (could train longer).
 # from published_model import Net
 
-from CEN_model import CENet
-from _preprocess import preprocess
+from censible.CEN_model import CENet
+from censible.preprocess import preprocess
 
 # import py3Dmol
 import os
