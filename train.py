@@ -13,7 +13,7 @@ params = get_args()
 params = validate_params(params)
 
 # change working directory to "./prepare_data/"
-os.chdir(params["data_dir"])
+# os.chdir(params["data_dir"])
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is
 # worth keeping, False otherwise. term_names is a list of all the term names.
