@@ -223,6 +223,8 @@ def save_outputs(
     # Save the model
     torch.save(model.state_dict(), f"{outdir}model.pt")
 
+    # model.pt  precalc_term_scales.npy
+
     # Save a boolean list of which precalculated terms are used in this model
     np.save(f"{outdir}which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
     with open(f"{outdir}report/which_precalc_terms_to_keep.txt", "w") as f:
@@ -261,18 +263,18 @@ def save_outputs(
         np.convolve(losses, np.ones(100) / 100, mode="valid"),
     )
     plt.ylim(0, 8)
-    plt.savefig(f"{outdir}loss_per_batch__train.png")
+    plt.savefig(f"{outdir}report/loss_per_batch__train.png")
 
     # Clear plot and start over
     plt.clf()
     plt.plot(pearsons)
-    plt.savefig(f"{outdir}pearsons_per_epoch__test.png")
+    plt.savefig(f"{outdir}report/pearsons_per_epoch__test.png")
 
     # Predictions vs. reality
     plt.clf()
     j = sns.jointplot(x=labels, y=results)
     plt.suptitle("R = %.2f" % pearsons[-1])
-    plt.savefig(f"{outdir}label_vs_predict_final__test.png")
+    plt.savefig(f"{outdir}report/label_vs_predict_final__test.png")
 
     # Show some representative weights. Should be similar across proteins, but
     # not identical.
@@ -280,7 +282,7 @@ def save_outputs(
         coefs_predict_lst,
         which_precalc_terms_to_keep,
         term_names,
-        outdir,
+        f"{outdir}report/",
         gninatypes_filenames,
     )
 
@@ -288,12 +290,12 @@ def save_outputs(
         contributions_lst,
         which_precalc_terms_to_keep,
         term_names,
-        outdir,
+        f"{outdir}report/",
         gninatypes_filenames,
     )
 
     # Save params as json
-    with open(f"{outdir}params.json", "w") as f:
+    with open(f"{outdir}report/params.json", "w") as f:
         json.dump(params, f, indent=4)
 
     # Save the term names
@@ -301,4 +303,4 @@ def save_outputs(
     #     f.write("\n".join(term_names[which_precalc_terms_to_keep]))
 
     # Save pearsons as csv
-    np.savetxt(f"{outdir}pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
+    np.savetxt(f"{outdir}report/pearsons.csv", pearsons, delimiter=",", fmt="%.8f")

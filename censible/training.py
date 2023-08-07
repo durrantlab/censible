@@ -394,11 +394,7 @@ def get_args() -> dict:
             help=value["description"] + " Default: " + str(value["val"]),
         )
     args = parser.parse_args()
-    params = vars(args)
-
-    import pdb; pdb.set_trace()
-
-    return params
+    return vars(args)  # Returns as dict
 
 def validate_params(params: dict) -> dict:
     """Validate the parameters. Also makes slight adjustments to ensure all
