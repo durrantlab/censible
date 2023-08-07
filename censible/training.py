@@ -140,6 +140,7 @@ def train_single_fold(
     test_dataset, test_gninatypes_filenames = load_split(
         params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
         1,
+        params["data_dir"],
         is_training_set=False,
     )
 
