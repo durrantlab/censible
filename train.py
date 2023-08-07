@@ -18,7 +18,7 @@ params = validate_params(params)
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is
 # worth keeping, False otherwise. term_names is a list of all the term names.
 which_precalc_terms_to_keep, term_names, precalc_term_scales = preprocess(
-    params["termtypes"]
+    params["termtypes"], params["data_dir"]
 )
 
 # Train the model

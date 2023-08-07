@@ -6,12 +6,13 @@ import numpy as np
 RARE_TERM_RATIO_CUTOFF = 0.01
 
 
-def preprocess(termtypes: str):
+def preprocess(termtypes: str, data_dir: str):
     """Preprocesses the data.
     
     Args:
         termtypes (str): A string representing the path to the termtypes file.
             Can be 'all', 'smina', or 'gaussian'.
+        data_dir (str): A string representing the path to the data directory.
 
     Returns:
         A tuple containing:
@@ -23,6 +24,9 @@ def preprocess(termtypes: str):
                 factors for each term.
     """
 
+    if data_dir[-1] != "/":
+        data_dir += "/"
+
     # Some atomic interactions are nonexistent or rare and should be ignored.
     # Calculate statistics for each term.
 
@@ -30,7 +34,7 @@ def preprocess(termtypes: str):
     # because smina reorders the terms when it creates the vector for each
     # protein/ligand complex. So strange.
     term_names = []
-    for line in open("smina_ordered_terms.txt"):
+    for line in open(f"{data_dir}smina_ordered_terms.txt"):
         line = line.rstrip()
         term_names.append(line)
     term_names = np.array(term_names)
@@ -39,12 +43,12 @@ def preprocess(termtypes: str):
     # used here to get the terms, scale factors, etc. The are reloaded in
     # _training.py.
     all_examples = molgrid.ExampleProvider(
-        ligmolcache="lig.molcache2",
-        recmolcache="rec.molcache2",
+        ligmolcache=f"{data_dir}lig.molcache2",
+        recmolcache=f"{data_dir}rec.molcache2",
         iteration_scheme=molgrid.IterationScheme.LargeEpoch,
         default_batch_size=1,
     )
-    all_examples.populate("all_cen.types")
+    all_examples.populate(f"{data_dir}all_cen.types")
 
     # Get the experimentally measured affinities as well as the other terms.
     # all_affinities = []  # NOTE: Affinity not used here. Data reloaded (per
