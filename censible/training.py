@@ -122,7 +122,7 @@ def train_single_fold(
     ## train_dataset.populate("all_cen.types")
 
     train_dataset, _ = load_split(
-        params["prefix"] + ("train%d_cen.types" % params["fold_num"]),
+        params["data_dir"] + "/" + params["prefix"] + ("train%d_cen.types" % params["fold_num"]),
         params["batch_size"],
         is_training_set=True,
     )
@@ -136,7 +136,7 @@ def train_single_fold(
     # )
     # test_dataset.populate(params["prefix"] + ("test%d_cen.types" % params["fold_num"]))
     test_dataset, test_gninatypes_filenames = load_split(
-        params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
+        params["data_dir"] + "/" + params["prefix"] + ("test%d_cen.types" % params["fold_num"]),
         1,
         is_training_set=False,
     )

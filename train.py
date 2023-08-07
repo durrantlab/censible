@@ -35,6 +35,7 @@ which_precalc_terms_to_keep, term_names, precalc_term_scales = preprocess(
     test_weighted_terms_lst,
     which_precalc_terms_to_keep,
     precalc_term_scales_to_keep,
+    params["data_dir"]
 ) = train_single_fold(
     CENet, which_precalc_terms_to_keep, params, term_names, precalc_term_scales
 )
