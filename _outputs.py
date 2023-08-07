@@ -11,9 +11,25 @@ def _weights_heatmap(
     coefs_predict_lst,
     which_precalc_terms_to_keep,
     termnames,
-    save_dir,
-    gninatypes_filenames,
+    save_dir: str,
+    gninatypes_filenames: list[tuple[str, str]],
 ):
+    """Saves a heatmap of the weights.
+    
+    Args:
+        coefs_predict_lst: A list of numpy arrays, where each numpy array
+            represents the weights of a model.
+        which_precalc_terms_to_keep: A list of integers, where each integer
+            represents the index of a term in the precalculated terms to keep.
+        termnames: A list of strings, where each string represents the name of
+            a term in the precalculated terms.
+        save_dir: A string representing the directory to save the heatmap to.
+        gninatypes_filenames: A list of 2-tuples, where each 2-tuple represents
+            the gninatypes filenames for a protein-ligand complex.
+    """
+
+    import pdb; pdb.set_trace()
+
     # Save all weights
     header = ["protein_gnina_types", "ligand_gnina_types"] + [
         h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]
@@ -27,21 +43,15 @@ def _weights_heatmap(
         ccweights[i].insert(0, gninatypes_filenames[i][0])
 
     # Save ccweights to csv file, using the values in header as the column names
-    with open(save_dir + "weights.csv", "w") as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(ccweights)
-
+    with open(f"{save_dir}weights.csv", "w") as f:
+        _extracted_from__weights_heatmap_36(f, header, ccweights)
     NUM_EXAMPLES_TO_PICK = 100
     np.random.shuffle(ccweights)
     ccweights = ccweights[:NUM_EXAMPLES_TO_PICK]
 
     # Save ccweights to csv file, using the values in header as the column names
-    with open(save_dir + "a_few_weights.csv", "w") as f:
-        writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(ccweights)
-
+    with open(f"{save_dir}a_few_weights.csv", "w") as f:
+        _extracted_from__weights_heatmap_36(f, header, ccweights)
     # Scale the columns of the ccweights so that they are z scores
     ccweights = np.array([ccweights[i][2:] for i in range(len(ccweights))])
     ccweights = (ccweights - ccweights.mean(axis=0)) / ccweights.std(axis=0)
@@ -55,7 +65,14 @@ def _weights_heatmap(
     sns.heatmap(ccweights)
     plt.xlabel("Weights")
     plt.ylabel("Prot/Lig Complexes")
-    plt.savefig(save_dir + "a_few_weights.png")
+    plt.savefig(f"{save_dir}a_few_weights.png")
+
+
+# TODO Rename this here and in `_weights_heatmap`
+def _extracted_from__weights_heatmap_36(f, header, ccweights):
+    writer = csv.writer(f)
+    writer.writerow(header)
+    writer.writerows(ccweights)
 
 
 def _contributions_heatmap(
