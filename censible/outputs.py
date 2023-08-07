@@ -140,6 +140,7 @@ def _contributions_heatmap(
     plt.ylabel("Prot/Lig Complexes")
     plt.savefig(f"{save_dir}a_few_contributions.png")
 
+
 def _get_output_dir(params: dict) -> str:
     """Gets the output directory for the model.
     
@@ -174,6 +175,68 @@ def _get_output_dir(params: dict) -> str:
     os.mkdir(report_subdir)
 
     return outdir
+
+
+def _save_model(
+    model: "CENet",
+    results: dict,
+    coefs_predict_lst: list[np.ndarray],
+    which_precalc_terms_to_keep: np.ndarray,
+    precalc_term_scales_to_keep: np.ndarray,
+    term_names: np.ndarray,
+    outdir: str,
+    report_subdir: str,
+):
+    """Saves the model and associated files.
+    
+    Args:
+        model (CENet): The model to save.
+        results (dict): A dictionary of results.
+        coefs_predict_lst (list[np.ndarray]): A list of numpy arrays, where
+            each numpy array represents the coefficients for a given example.
+        which_precalc_terms_to_keep (np.ndarray): A numpy array of booleans
+            indicating which precalculated terms to keep.
+        precalc_term_scales_to_keep (np.ndarray): A numpy array of floats
+            indicating the scale of each precalculated term to keep.
+        term_names (np.ndarray): A numpy array of strings, where each string
+            represents the name of a term in the precalculated terms.
+        outdir (str): A string representing the output directory for the model.
+        report_subdir (str): A string representing the output directory for the
+            report.
+    """
+
+    # Save the model
+    torch.save(model.state_dict(), f"{outdir}model.pt")
+
+    # Save a boolean list of which precalculated terms are used in this model
+    np.save(f"{outdir}which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
+    with open(f"{report_subdir}which_precalc_terms_to_keep.txt", "w") as f:
+        f.write(str(which_precalc_terms_to_keep))
+
+    # Save the names of the retained terms
+    with open(f"{report_subdir}term_names.txt", "w") as f:
+        f.write(
+            str(
+                [
+                    term_names[i]
+                    for i in range(len(term_names))
+                    if which_precalc_terms_to_keep[i]
+                ]
+            )
+        )
+
+    # Save the normalization factors applied to the retained precalculated terms.
+    np.save(f"{outdir}precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
+    with open(f"{report_subdir}precalc_term_scales.txt", "w") as f:
+        f.write(str(precalc_term_scales_to_keep))
+
+    # Save weights and predictions. TODO: Where is this used?
+    np.save(
+        f"{report_subdir}weights_and_predictions.npy",
+        np.hstack([np.array(coefs_predict_lst).squeeze(), results[:, None]]),
+    )
+    # np.save("predictions.npy",results)
+
 
 def save_outputs(
     model: "CENet",
@@ -221,40 +284,17 @@ def save_outputs(
     outdir = _get_output_dir(params)
     report_subdir = f"{outdir}report/"
 
-    # Save the model
-    torch.save(model.state_dict(), f"{outdir}model.pt")
-
-    # model.pt  precalc_term_scales.npy
-
-    # Save a boolean list of which precalculated terms are used in this model
-    np.save(f"{outdir}which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
-    with open(f"{report_subdir}which_precalc_terms_to_keep.txt", "w") as f:
-        f.write(str(which_precalc_terms_to_keep))
-
-    # Save the names of the retained terms
-    with open(f"{report_subdir}term_names.txt", "w") as f:
-        f.write(
-            str(
-                [
-                    term_names[i]
-                    for i in range(len(term_names))
-                    if which_precalc_terms_to_keep[i]
-                ]
-            )
-        )
-
-    # Save the normalization factors applied to the retained precalculated terms.
-    np.save(f"{outdir}precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
-    with open(f"{report_subdir}precalc_term_scales.txt", "w") as f:
-        f.write(str(precalc_term_scales_to_keep))
-
-    # Save weights and predictions. TODO: Where is this used?
-    np.save(
-        f"{report_subdir}weights_and_predictions.npy",
-        np.hstack([np.array(coefs_predict_lst).squeeze(), results[:, None]]),
+    # Save the model and associated files
+    _save_model(
+        model,
+        results,
+        coefs_predict_lst,
+        which_precalc_terms_to_keep,
+        precalc_term_scales_to_keep,
+        term_names,
+        outdir,
+        report_subdir,
     )
-    # np.save("predictions.npy",results)
-
 
     # Losses per batch
     plt.plot(losses)
