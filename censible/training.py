@@ -33,12 +33,14 @@ def load_split(
         (receptor, ligand).
     """
 
+    types_filename = f"{data_dir}/{types_filename}"
+
     # You need to keep track of the ligand and receptor filenames
     if not is_training_set:
         # It's a testing set, so there will be no shuffle. Keep track of the
         # gninatypes filenames for reporting.
         gninatypes_filenames = []
-        with open(f"{data_dir}types_filename", "r") as f:
+        with open(types_filename, "r") as f:
             for line in f:
                 receptor_file, ligand_file = line.strip().split()[-2:]
                 gninatypes_filenames.append((receptor_file, ligand_file))
