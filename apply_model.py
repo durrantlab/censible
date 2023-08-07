@@ -18,7 +18,6 @@ args = get_cmd_args()
     model,
     smina_terms_mask,
     norm_factors_masked,
-    custom_scoring_path,
     smina_ordered_terms_names,
 ) = load_model(args.model_dir)
 

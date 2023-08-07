@@ -29,7 +29,6 @@ def load_example(
     smina_exec_path: str,
     smina_terms_mask,
     smina_ordered_terms_names,
-    custom_scoring_path: str,
 ) -> molgrid.molgrid.ExampleProvider:
     """Load an example from a ligand and receptor path.
     
@@ -42,19 +41,14 @@ def load_example(
             to keep.
         smina_ordered_terms_names (np.ndarray): A numpy array of strings 
             representing the names of all the terms.
-        custom_scoring_path (str): A string representing the path to the custom
-            scoring file.
             
     Returns:
         A molgrid ExampleProvider.
     """
 
-    import pdb
-
-    pdb.set_trace()
-
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
+    custom_scoring_path = data_file_path("custom_scoring.txt")
     cmd = f"{smina_exec_path} --custom_scoring {custom_scoring_path} --score_only -r {rec_path} -l {lig_path}"
     smina_out = str(subprocess.check_output(cmd, shell=True)).split("\\n")
 
@@ -122,12 +116,6 @@ def load_model(model_dir: str):
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    # Get the path to the custom_scoring.txt file. It is in the same directory
-    # as this python script.
-    custom_scoring_path = (
-        os.path.dirname(os.path.realpath(__file__)) + os.sep + "custom_scoring.txt"
-    )
-
     smina_ordered_terms_path = data_file_path("smina_ordered_terms.txt")
     with open(smina_ordered_terms_path) as f:
         smina_ordered_terms_names = f.read().strip().split()
@@ -136,7 +124,6 @@ def load_model(model_dir: str):
         model,
         smina_terms_mask,
         norm_factors_masked,
-        custom_scoring_path,
         smina_ordered_terms_names,
     )
 
