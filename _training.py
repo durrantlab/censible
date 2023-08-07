@@ -14,15 +14,20 @@ from _preprocess import remove_rare_terms
 
 def load_split(
     types_filename: str, batch_size: int, is_training_set: bool = False
-) -> Any:
-    """Loads the data from the types file and returns a
-    molgrid.MolGridDataGenerator.
+) -> tuple[molgrid.molgrid.ExampleProvider, Any]:
+    """Loads the data from the types file .
     
     Args:
         types_filename: A string representing the path to the types file.
         batch_size: An integer representing the batch size.
         is_training_set: A boolean representing whether the data is a training
             set. Defaults to False.
+
+    Returns:
+        A tuple of the molgrid.ExampleProvider and the gninatypes filenames. If
+        it's a training set, then the gninatypes filenames will be None.
+        Otherwise, it will be a list of tuples of the gninatypes filenames
+        (receptor, ligand).
     """
 
     # You need to keep track of the ligand and receptor filenames
@@ -64,8 +69,6 @@ def load_split(
     # not all grids.
     dataset.populate(types_filename)
     # train_dataset.populate("all_cen.types")
-
-    import pdb; pdb.set_trace()
 
     return dataset, gninatypes_filenames
 
