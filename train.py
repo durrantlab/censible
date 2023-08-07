@@ -1,7 +1,6 @@
 from _training import train_single_fold
 from _outputs import generate_outputs
 import numpy as np
-import json
 import argparse
 import torch
 import datetime
@@ -108,23 +107,23 @@ now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H-%M-%S")
 
 # Define and create the save directory
-save_dir = orig_dir + "imgs/" + now_str + "/"
+save_dir = f"{orig_dir}imgs/{now_str}/"
 os.mkdir(save_dir)
 
 # Make report subdirectory
-report_subdir = save_dir + "report/"
+report_subdir = f"{save_dir}report/"
 os.mkdir(report_subdir)
 
 # Save the model
-torch.save(model.state_dict(), save_dir + "model.pt")
+torch.save(model.state_dict(), f"{save_dir}model.pt")
 
 # Save a boolean list of which precalculated terms are used in this model
-np.save(save_dir + "which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
-with open(report_subdir + "which_precalc_terms_to_keep.txt", "w") as f:
+np.save(f"{save_dir}which_precalc_terms_to_keep.npy", which_precalc_terms_to_keep)
+with open(f"{report_subdir}which_precalc_terms_to_keep.txt", "w") as f:
     f.write(str(which_precalc_terms_to_keep))
 
 # Save the names of the retained terms
-with open(report_subdir + "term_names.txt", "w") as f:
+with open(f"{report_subdir}term_names.txt", "w") as f:
     f.write(
         str(
             [
@@ -136,13 +135,13 @@ with open(report_subdir + "term_names.txt", "w") as f:
     )
 
 # Save the normalization factors applied to the retained precalculated terms.
-np.save(save_dir + "precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
-with open(report_subdir + "precalc_term_scales.txt", "w") as f:
+np.save(f"{save_dir}precalc_term_scales.npy", precalc_term_scales_to_keep.cpu())
+with open(f"{report_subdir}precalc_term_scales.txt", "w") as f:
     f.write(str(precalc_term_scales_to_keep))
 
 # Save weights and predictions. TODO: Where is this used?
 np.save(
-    report_subdir + "weights_and_predictions.npy",
+    f"{report_subdir}weights_and_predictions.npy",
     np.hstack([np.array(test_coefs_predict_lst).squeeze(), test_results[:, None]]),
 )
 # np.save("predictions.npy",results)

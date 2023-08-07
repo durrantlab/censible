@@ -11,7 +11,14 @@ class CENet(nn.Module):
     """Default 2018, but final layer generates coefficients for terms."""
 
     def __init__(self, dims, numterms=None):
-        import pdb; pdb.set_trace()
+        """Initialize the model.
+        
+        Args:
+            dims (list): A list of integers representing the dimensions of the
+                input.
+            numterms (int): The number of terms to use. Can also be None.
+        """
+
         super(CENet, self).__init__()
         self.modules = []
         nchannels = dims[0]
@@ -53,8 +60,19 @@ class CENet(nn.Module):
         self.fc = nn.Linear(last_size, numterms)
         self.add_module("last_fc", self.fc)
 
-    def forward(self, batch, precalculated_terms):
-        import pdb; pdb.set_trace()
+    def forward(self, batch: torch.Tensor, precalculated_terms: torch.Tensor) -> tuple:
+        """Forward pass.
+        
+        Args:
+            batch (torch.Tensor): A torch tensor representing a batch of data.
+            precalculated_terms (torch.Tensor): A torch tensor representing the
+                precalculated terms.
+        
+        Returns:
+            A tuple of torch tensors representing the predicted affinity, the
+            predicted coefficients, and the weighted terms.
+        """
+
         # should approximate the affinity of the receptor/ligand pair
 
         for layer in self.modules:

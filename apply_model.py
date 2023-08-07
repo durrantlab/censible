@@ -33,7 +33,21 @@ def load_example(
     smina_terms_mask,
     smina_ordered_terms_names,
 ):
-    import pdb; pdb.set_trace()
+    """Load an example from a ligand and receptor path.
+    
+    Args:
+        lig_path (str): A string representing the path to the ligand.
+        rec_path (str): A string representing the path to the receptor.
+        smina_exec_path (str): A string representing the path to the smina 
+            executable.
+        smina_terms_mask (np.ndarray): A boolean array representing which terms
+            to keep.
+        smina_ordered_terms_names (np.ndarray): A numpy array of strings 
+            representing the names of all the terms.
+            
+    Returns:
+        A numpy array of floats representing the terms.
+    """
 
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
@@ -75,13 +89,25 @@ def load_example(
     # Delete the temporary file.
     os.remove(smina_outfile)
 
+    import pdb; pdb.set_trace()
+
     return example
 
 # load in model -- from torch
 def load_model(
     model_path: str, smina_terms_mask_path: str, smina_term_scales_path: str
 ):
-    import pdb; pdb.set_trace()
+    """Load the model, the smina terms mask, and the smina term scales.
+    
+    Args:
+        model_path (str): The path to the model.
+        smina_terms_mask_path (str): The path to the saved smina terms mask.
+        smina_term_scales_path (str): The path to the saved smina term scales.
+        
+    Returns:
+        A tuple containing the model and other important data for applying the
+        model to an example.
+    """
 
     ### get the single_example_terms -- one set of smina computed terms
     # load normalization term data
@@ -259,9 +285,13 @@ def full_term_description(term: str) -> str:
 
 
 # run the model on test example
-def get_cmd_args():
-    import pdb; pdb.set_trace()
+def get_cmd_args() -> argparse.Namespace:
+    """Parse command line arguments.
     
+    Returns:
+        argparse.Namespace: command line arguments
+    """
+
     # Create argparser
     parser = argparse.ArgumentParser()
     parser.add_argument(
