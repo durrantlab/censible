@@ -1,3 +1,4 @@
+from typing import Any
 import molgrid
 import torch
 import torch.optim as optim
@@ -13,7 +14,7 @@ from _preprocess import remove_rare_terms
 
 def load_split(
     types_filename: str, batch_size: int, is_training_set: bool = False
-) -> molgrid.MolGridDataGenerator:
+) -> Any:
     """Loads the data from the types file and returns a
     molgrid.MolGridDataGenerator.
     
@@ -63,6 +64,8 @@ def load_split(
     # not all grids.
     dataset.populate(types_filename)
     # train_dataset.populate("all_cen.types")
+
+    import pdb; pdb.set_trace()
 
     return dataset, gninatypes_filenames
 
