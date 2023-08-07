@@ -1,19 +1,11 @@
 from censible.training import get_args, train_single_fold, validate_params
 from censible.outputs import save_outputs
-
-# Published performance for this model on this set is 1.5 RMSE and 0.7 Pearson's
-# R, so we are pretty close (could train longer).
-# from published_model import Net
-
 from censible.CEN_model import CENet
 from censible.preprocess import preprocess
 import os
 
 params = get_args()
 params = validate_params(params)
-
-# change working directory to "./prepare_data/"
-# os.chdir(params["data_dir"])
 
 # which_precalc_terms_to_keep is a boolean array, True if a given feature is
 # worth keeping, False otherwise. term_names is a list of all the term names.

@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from censible.training import View
 
+# Compare to published performance for this model, 1.5 RMSE and 0.7 Pearson's R,
+# when predicting affinity alone.
 
 class CENet(nn.Module):
     """Default 2018, but final layer generates coefficients for terms."""
