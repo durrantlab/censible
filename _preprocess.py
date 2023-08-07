@@ -7,6 +7,7 @@ RARE_TERM_RATIO_CUTOFF = 0.01
 
 
 def preprocess(termtypes):
+    import pdb; pdb.set_trace()
     # Some atomic interactions are nonexistent or rare and should be ignored.
     # Calculate statistics for each term.
 
@@ -60,6 +61,7 @@ def remove_rare_terms(
     term_names: List[str],
     which_precalc_terms_to_keep: np.ndarray = None,
 ):
+    import pdb; pdb.set_trace()
     global RARE_TERM_RATIO_CUTOFF
 
     # If which_precalc_terms_to_keep is not provided, then it is calculated here. All trues.
@@ -119,6 +121,8 @@ def remove_rare_terms(
 def normalize_terms(all_terms, which_precalc_terms_to_keep):
     # TODO: Need to implement ability tosave values in factors and load them
     # back in for inference.
+
+    import pdb; pdb.set_trace()
 
     MAX_VAL_AFTER_NORM = 1.0
 

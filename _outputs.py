@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -66,32 +67,36 @@ def _weights_heatmap(
     plt.savefig(f"{save_dir}a_few_weights.png")
 
 
-def _save_to_csv(f, header, vals):
+def _save_to_csv(f: Any, header: list[str], vals: list[list[Any]]):
     """Save ccweights to csv file, using the values in header as the column names
     
     Args:
-        f: A file object.
+        f: A file-like object.
         header: A list of strings, where each string represents the name of a
             column.
-        vals: A numpy array of weights.
+        vals: A list of lists with the values (rows). Can be combination of strings
+            and numbers.
     """
-
-    import pdb; pdb.set_trace()
 
     writer = csv.writer(f)
     writer.writerow(header)
     writer.writerows(vals)
-    
+
+
 def _contributions_heatmap(
-    contributions_lst, goodfeatures, termnames, save_dir, gninatypes_filenames
+    contributions_lst: list[np.ndarray],
+    which_precalc_terms_to_keep: np.ndarray,
+    termnames: np.ndarray,
+    save_dir: str,
+    gninatypes_filenames: list[tuple[str, str]],
 ):
     """Saves a heatmap of the contributions.
     
     Args:
         contributions_lst: A list of numpy arrays, where each numpy array
-            represents the contributions of a model.
-        goodfeatures: A numpy array of booleans indicating which precalculated
-            terms to keep.
+            represents the contributions for a given example.
+        which_precalc_terms_to_keep: A numpy array of booleans indicating which
+            precalculated terms to keep.
         termnames: A numpy array of strings, where each string represents the
             name of a term in the precalculated terms.
         save_dir: A string representing the directory to save the heatmap to.
@@ -99,11 +104,9 @@ def _contributions_heatmap(
             the gninatypes filenames for a protein and ligand, respectively.
     """
 
-    import pdb; pdb.set_trace()
-
     # save all contributions
     header = ["protein_gnina_types", "ligand_gnina_types"] + [
-        h.replace(",", "_") for h in termnames[goodfeatures]
+        h.replace(",", "_") for h in termnames[which_precalc_terms_to_keep]
     ]
 
     # Save ccweights to csv file, using the values in header as the column names
@@ -132,22 +135,44 @@ def _contributions_heatmap(
     plt.ylabel("Prot/Lig Complexes")
     plt.savefig(f"{save_dir}a_few_contributions.png")
 
+
 def generate_outputs(
-    save_dir,
-    losses,
-    labels,  # Numeric labels
-    results,  # Predictions
-    gninatypes_filenames,
-    pearsons,
-    coefs_predict_lst,
-    contributions_lst,
-    which_precalc_terms_to_keep,
-    termnames,
-    params,
+    save_dir: str,
+    losses: list[float],
+    labels: np.ndarray,  # Numeric labels
+    results: np.ndarray,  # Predictions
+    gninatypes_filenames: list[tuple[str, str]],
+    pearsons: list[float],
+    coefs_predict_lst: list[np.ndarray],
+    contributions_lst: list[np.ndarray],
+    which_precalc_terms_to_keep: np.ndarray,
+    termnames: np.ndarray,
+    params: dict,
 ):
+    """Generates outputs for the model.
     
-    import pdb
-    pdb.set_trace()
+    Args:
+        save_dir: A string representing the directory to save the outputs to.
+        losses: A list of floats, where each float represents the loss for a
+            batch.
+        labels: A numpy array of floats, where each float represents the label
+            (experimentally measured affinity) for a protein/ligand complex.
+        results: A numpy array of floats, where each float represents the
+            prediction for a protein/ligand complex.
+        gninatypes_filenames: A list of 2-tuples, where each 2-tuple represents
+            the gninatypes filenames for a protein and ligand, respectively.
+        pearsons: A list of floats, where each float represents the Pearson's
+            correlation coefficient for a test set.
+        coefs_predict_lst: A list of numpy arrays, where each numpy array
+            represents the coefficients for a given example.
+        contributions_lst: A list of numpy arrays, where each numpy array
+            represents the contributions for a given example.
+        which_precalc_terms_to_keep: A numpy array of booleans indicating which
+            precalculated terms to keep.
+        termnames: A numpy array of strings, where each string represents the
+            name of a term in the precalculated terms.
+        params: A Params object.
+    """
 
     # Losses per batch
     plt.plot(losses)
