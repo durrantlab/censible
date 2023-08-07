@@ -32,7 +32,7 @@ def load_example(
     smina_exec_path: str,
     smina_terms_mask,
     smina_ordered_terms_names,
-):
+) -> molgrid.molgrid.ExampleProvider:
     """Load an example from a ligand and receptor path.
     
     Args:
@@ -46,7 +46,7 @@ def load_example(
             representing the names of all the terms.
             
     Returns:
-        A numpy array of floats representing the terms.
+        A molgrid ExampleProvider.
     """
 
     # get CEN terms for proper termset
@@ -81,7 +81,7 @@ def load_example(
 
     example = molgrid.ExampleProvider(
         # data_root can be any directory, I think.
-        #data_root="./",
+        # data_root="./",
         default_batch_size=1,
     )
     example.populate(smina_outfile)
@@ -89,9 +89,8 @@ def load_example(
     # Delete the temporary file.
     os.remove(smina_outfile)
 
-    import pdb; pdb.set_trace()
-
     return example
+
 
 # load in model -- from torch
 def load_model(
@@ -141,8 +140,25 @@ def load_model(
 
 
 # apply model to test data
-def test_apply(example_data, smina_terms_mask, smina_norm_factors_masked, model):
-    import pdb; pdb.set_trace()
+def test_apply(
+    example_data: molgrid.molgrid.ExampleProvider,
+    smina_terms_mask: np.ndarray,
+    smina_norm_factors_masked: np.ndarray,
+    model: CENet,
+):
+    """Apply the model to the test data.
+    
+    Args:
+        example_data (molgrid.molgrid.ExampleProvider): The example data.
+        smina_terms_mask (np.ndarray): A boolean array representing which terms
+            to keep.
+        smina_norm_factors_masked (np.ndarray): The normalization factors for
+            the terms.
+        model (CENet): The model.
+        
+    Returns:
+        A tuple containing the predicted affinity, weights, contributions, etc.
+    """
 
     smina_norm_factors_masked = torch.from_numpy(smina_norm_factors_masked).to("cuda")
 
@@ -200,7 +216,9 @@ def test_apply(example_data, smina_terms_mask, smina_norm_factors_masked, model)
 
 
 def get_numeric_val(s: str, varname: str) -> str:
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
 
     # v is a number, so only digits, +/-, and .
     num_regex = "([e0-9\.\+\-]+)"
@@ -210,7 +228,14 @@ def get_numeric_val(s: str, varname: str) -> str:
 
 
 def full_term_description(term: str) -> str:
-    import pdb; pdb.set_trace()
+    """Given a term, return a more complete description.
+    
+    Args:
+        term (str): The term.
+        
+    Returns:
+        str: The more complete description.
+    """
 
     # Given that making explainable scoring functions is the goal, good to
     # provide more complete description of the terms. This function tries to do
@@ -319,7 +344,13 @@ def get_cmd_args() -> argparse.Namespace:
 args = get_cmd_args()
 
 # load the model
-model, smina_terms_mask, norm_factors_masked, custom_scoring_path, smina_ordered_terms_names = load_model(
+(
+    model,
+    smina_terms_mask,
+    norm_factors_masked,
+    custom_scoring_path,
+    smina_ordered_terms_names,
+) = load_model(
     args.model_dir + os.sep + "model.pt",
     args.model_dir + os.sep + "which_precalc_terms_to_keep.npy",
     args.model_dir + os.sep + "precalc_term_scales.npy",
@@ -344,21 +375,28 @@ for lig_path in args.ligpath:
         smina_ordered_terms_names,
     )
 
-    predicted_affinity, weights_predict, contributions_predict, smina_terms_masked = test_apply(
-        example, smina_terms_mask, norm_factors_masked, model
-    )
+    (
+        predicted_affinity,
+        weights_predict,
+        contributions_predict,
+        smina_terms_masked,
+    ) = test_apply(example, smina_terms_mask, norm_factors_masked, model)
 
     terminal_output += f"receptor\t{args.recpath}\n"
     terminal_output += f"ligand\t{lig_path}\n"
     terminal_output += f"model\t{args.model_dir}\n\n"
-    terminal_output += f"predicted_affinity\t{str(round(float(predicted_affinity), 5))}\n"
+    terminal_output += (
+        f"predicted_affinity\t{str(round(float(predicted_affinity), 5))}\n"
+    )
 
     print(terminal_output)
 
     if args.out != "":
         print(f"See {args.out} for predicted weights and contributions.")
     else:
-        print("WARNING: No output file specified (--out). Not saving weights and contributions.")
+        print(
+            "WARNING: No output file specified (--out). Not saving weights and contributions."
+        )
 
     print("\n" + bar)
 
@@ -395,14 +433,10 @@ for lig_path in args.ligpath:
         #     [str(round(x, 5)) for x in norm_factors_masked]
         # ) + "\n"
 
-        # import pdb ;pdb.set_trace()
         tsv_output += (
             "normalized_precalc_smina_terms\t"
             + "\t".join(
-                [
-                    str(round(x, 5))
-                    for x in smina_terms_masked * norm_factors_masked
-                ]
+                [str(round(x, 5)) for x in smina_terms_masked * norm_factors_masked]
             )
             + "\n"
         )
