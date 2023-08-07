@@ -128,7 +128,6 @@ def train_single_fold(
     # Update precalc_term_scales to include only the terms that are
     # actually used.
     precalc_term_scales_to_keep = precalc_term_scales[which_precalc_terms_to_keep]
-    print(precalc_term_scales_to_keep)
 
     # Create tensors to hold the inputs.
     dims = gmaker.grid_dimensions(train_dataset.num_types())
@@ -144,8 +143,6 @@ def train_single_fold(
     nterms = np.count_nonzero(which_precalc_terms_to_keep)
     model = Net(dims, nterms).to("cuda")
     model.apply(weights_init)
-    print(dims)
-    print(nterms)
     # Setup optimizer and scheduler for training.
     optimizer = optim.SGD(
         model.parameters(), lr=params["lr"], weight_decay=0.0001, momentum=0.9
