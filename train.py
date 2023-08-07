@@ -100,8 +100,8 @@ print("Preprocessing done.")
 
 # Save model
 # Create the directory if it doesn't exist
-if not os.path.exists(orig_dir + "imgs"):
-    os.mkdir(orig_dir + "imgs")
+if not os.path.exists(f"{orig_dir}imgs"):
+    os.mkdir(f"{orig_dir}imgs")
 
 # Get the current date and time as a string, in a format that can be a filename
 now = datetime.datetime.now()

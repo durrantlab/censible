@@ -15,11 +15,12 @@ def preprocess(termtypes: str):
 
     Returns:
         A tuple containing:
-            which_precalc_terms_to_keep: A list of integers representing the
-                indices of the terms to keep.
-            term_names: A list of strings representing the names of the terms.
-            precalc_term_scales: A list of floats representing the scale factors
-                for the terms.
+            which_precalc_terms_to_keep: A numpy array of booleans indicating
+                which precalculated terms to keep.
+            term_names: A numpy array of strings, where each string represents
+                the name of a term in the precalculated terms.
+            precalc_term_scales: A tensor of floats representing the scale
+                factors for each term.
     """
 
     # Some atomic interactions are nonexistent or rare and should be ignored.
@@ -65,9 +66,7 @@ def preprocess(termtypes: str):
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
 
-    precalc_term_scales = normalize_terms(all_terms, which_precalc_terms_to_keep)
-
-    import pdb; pdb.set_trace()
+    precalc_term_scales = get_precalc_term_scales(all_terms, which_precalc_terms_to_keep)
 
     return which_precalc_terms_to_keep, term_names, precalc_term_scales
 
@@ -145,8 +144,11 @@ def remove_rare_terms(
     return which_precalc_terms_to_keep
 
 
-def normalize_terms(all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray) -> torch.Tensor:
-    """Normalizes the terms so that they are between 0 and 1.
+def get_precalc_term_scales(
+    all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray
+) -> torch.Tensor:
+    """Gets the scales for each term. The scales will normalize values when
+    multipled.
     
     Args:
         all_terms: A 2D numpy array representing all the terms for all examples.

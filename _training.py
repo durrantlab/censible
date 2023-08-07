@@ -12,6 +12,8 @@ from _preprocess import remove_rare_terms
 
 
 def load_split(types_filename: str, batch_size: int, is_training_set: bool = False):
+    import pdb; pdb.set_trace()
+
     # You need to keep track of the ligand and receptor filenames
     if not is_training_set:
         # It's a testing set, so there will be no shuffle. Keep track of the
@@ -58,6 +60,7 @@ def load_split(types_filename: str, batch_size: int, is_training_set: bool = Fal
 def train_single_fold(
     Net, which_precalc_terms_to_keep, params, term_names, precalc_term_scales
 ):
+    import pdb; pdb.set_trace()
     # The main object. See
     # https://gnina.github.io/libmolgrid/python/index.html#the-gridmaker-class
     # TODO: No grid_center parameter here?
@@ -168,7 +171,7 @@ def train_single_fold(
         # skipping first generation (effectively).
         optimizer.step()
 
-        for batch_idx, train_batch in enumerate(train_dataset):
+        for train_batch in train_dataset:
             # print("    batch", batch_idx)
             train_batch.extract_labels(all_labels_for_training)
             affinity_label_for_training = all_labels_for_training[:, 0]  # affinity only
@@ -296,6 +299,8 @@ class View(nn.Module):
 
 
 def weights_init(m):
-    if isinstance(m, nn.Conv3d) or isinstance(m, nn.Linear):
+    import pdb
+    pdb.set_trace()
+    if isinstance(m, (nn.Conv3d, nn.Linear)):
         init.xavier_uniform_(m.weight.data)
         init.constant_(m.bias.data, 0)
