@@ -22,10 +22,11 @@ def process_directory(d):
 
     if lig is None:
         # Try getting it from the mol2 file instead
-        lig = Chem.MolFromMol2File(lig_name[:-3] + "mol2")
-        if lig is None:
-            print(f"Could not load {lig_name}")
-            return
+        lig = Chem.MolFromMol2File(f"{lig_name[:-3]}mol2")
+
+    if lig is None:
+        print(f"Could not load {lig_name}")
+        return
 
     # Get the center of geometry of the ligand
     lig_coords = lig.GetConformer().GetPositions()

@@ -19,11 +19,14 @@ def process_line(line):
         # smina_exec = "/mnt/data_2/DataC/miniconda3/envs/py39/bin/smina"
         # smina_exec = "/ihome/jdurrant/durrantj/bindingmoad2020_for_gnina/smina/smina.static"
         smina_exec = "/mnt/Data/jdurrant/cenet/prepare_data/smina/smina.static"
-        out = subprocess.check_output('%s --custom_scoring allterms.txt --score_only -r ./%s -l ./%s' % (smina_exec, r, l), shell=True)
+        out = subprocess.check_output(
+            f'{smina_exec} --custom_scoring allterms.txt --score_only -r ./{r} -l ./{l}',
+            shell=True,
+        )
         out = out.decode()
         m = re.findall('## [^N]\S+ (.*)', out)
 
-        return affinity + " " + m[0] + " " + rec + " " + lig + "\n"
+        return f"{affinity} {m[0]} {rec} {lig}" + "\n"
     except Exception as e:
         print(f"Error processing line: {line}. Error: {e}")
         return None

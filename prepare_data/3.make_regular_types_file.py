@@ -32,8 +32,7 @@ paths = {os.path.basename(path): path for path in paths}
 
 pdbids_to_remove = []
 
-for pdbid in affinity_dict:
-    affinity = affinity_dict[pdbid]
+for pdbid, affinity in affinity_dict.items():
 
     # Let's say ~ and = are the same
     affinity = affinity.replace("~", "=")
@@ -57,7 +56,7 @@ for pdbid in affinity_dict:
     if "<" in affinity and "uM" in affinity and float(affinity.split("<")[1].split("uM")[0]) < 1:
         affinity = affinity.replace("<", "=")
 
-    if not "=" in affinity:
+    if "=" not in affinity:
         # print(f"Affinity for {pdbid} is not in the right format: {affinity}")
         pdbids_to_remove.append(pdbid)
         continue
@@ -77,9 +76,8 @@ for pdbid in affinity_dict:
 for pdbid in pdbids_to_remove:
     del affinity_dict[pdbid]
 
-g = open("all_centered.types", "w")
-with open("all.types", "w") as f:
-    for pdbid in affinity_dict:
-        f.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.gninatypes {paths[pdbid]}/{pdbid}_ligand.gninatypes\n")
-        g.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein_centered.gninatypes {paths[pdbid]}/{pdbid}_ligand_centered.gninatypes\n")
-g.close()
+with open("all_centered.types", "w") as g:
+    with open("all.types", "w") as f:
+        for pdbid in affinity_dict:
+            f.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.gninatypes {paths[pdbid]}/{pdbid}_ligand.gninatypes\n")
+            g.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein_centered.gninatypes {paths[pdbid]}/{pdbid}_ligand_centered.gninatypes\n")

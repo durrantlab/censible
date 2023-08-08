@@ -1,4 +1,5 @@
 import argparse
+from typing import List
 import numpy as np
 import torch
 from censible.inference.term_descriptions import full_term_description
@@ -46,19 +47,24 @@ class TSVWriter:
 
     def generate_terms_weights_contributions(
         self,
-        smina_ordered_terms_names,
-        smina_terms_mask,
-        smina_terms_masked,
-        norm_factors_masked,
-        weights_predict,
-        contributions_predict,
+        smina_ordered_terms_names: List[str],
+        smina_terms_mask: np.ndarray,
+        smina_terms_masked: np.ndarray,
+        norm_factors_masked: np.ndarray,
+        weights_predict: np.ndarray,
+        contributions_predict: np.ndarray,
     ):
         """Generate the terms, weights, and contributions for the TSV output.
         
         Args:
-            """
+            smina_ordered_terms_names (List[str]): The ordered terms names.
+            smina_terms_mask (np.ndarray): The mask for the terms.
+            smina_terms_masked (np.ndarray): The masked terms.
+            norm_factors_masked (np.ndarray): The masked normalization factors.
+            weights_predict (np.ndarray): The predicted weights.
+            contributions_predict (np.ndarray): The predicted contributions.
+        """
         
-        import pdb; pdb.set_trace()
         if self.args.out == "":
             # If not specifying an output file, don't bother with the rest.
             return

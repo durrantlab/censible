@@ -15,44 +15,46 @@ import re
 
 def create_initial_hd5_file():
     # If pdbbind2020.hdf5 doens't exist, make it.
-    if not os.path.exists('pdbbind2020.hdf5'):
-        index_files = [
-            "1.pdbbind2020/refined-set/index/INDEX_refined_name.2020",
-            "1.pdbbind2020/refined-set/index/INDEX_general_PL_name.2020"
-        ]
+    if os.path.exists('pdbbind2020.hdf5'):
+        return
 
-        # Load the lines
-        lines = []
-        for index_file in index_files:
-            with open(index_file, 'r') as f:
-                lines += f.readlines()
-        
-        # Remove lines that begin with '#'
-        lines = [l for l in lines if l[0] != '#']
+    index_files = [
+        "1.pdbbind2020/refined-set/index/INDEX_refined_name.2020",
+        "1.pdbbind2020/refined-set/index/INDEX_general_PL_name.2020"
+    ]
 
-        # Split the lines into a list of lists
-        lines = [l.split() for l in lines]
+    # Load the lines
+    lines = []
+    for index_file in index_files:
+        with open(index_file, 'r') as f:
+            lines += f.readlines()
 
-        # Get the PDB IDs
-        pdb_ids = [l[0] for l in lines]
+    # Remove lines that begin with '#'
+    lines = [l for l in lines if l[0] != '#']
 
-        # Get the uniprot ids
-        uniprot_ids = [l[2] for l in lines]
+    # Split the lines into a list of lists
+    lines = [l.split() for l in lines]
 
-        data = {}
-        for pdb_id, uniprot_id in zip(pdb_ids, uniprot_ids):
-            data[pdb_id] = {"uniprot": uniprot_id}
+    # Get the PDB IDs
+    pdb_ids = [l[0] for l in lines]
 
-        dirs = glob.glob("1.pdbbind2020/refined-set/????") + glob.glob("1.pdbbind2020/v2020-other-PL/????")
-        dirs = {os.path.basename(d): d for d in dirs}
+    # Get the uniprot ids
+    uniprot_ids = [l[2] for l in lines]
 
-        with h5py.File('pdbbind2020.hdf5', 'w') as h5file:
-            for pdb_id in data:
-                pdb_group = h5file.create_group(pdb_id)
-                pdb_group.create_dataset('uniprot', data=data[pdb_id]['uniprot'])
-                pdb_group.create_dataset('dir', data=dirs[pdb_id])
+    data = {
+        pdb_id: {"uniprot": uniprot_id}
+        for pdb_id, uniprot_id in zip(pdb_ids, uniprot_ids)
+    }
+    dirs = glob.glob("1.pdbbind2020/refined-set/????") + glob.glob("1.pdbbind2020/v2020-other-PL/????")
+    dirs = {os.path.basename(d): d for d in dirs}
 
-        h5file.close()
+    with h5py.File('pdbbind2020.hdf5', 'w') as h5file:
+        for pdb_id, value in data.items():
+            pdb_group = h5file.create_group(pdb_id)
+            pdb_group.create_dataset('uniprot', data=value['uniprot'])
+            pdb_group.create_dataset('dir', data=dirs[pdb_id])
+
+    h5file.close()
 
 def add_pdb_author_chains(h5file):
     # Get the pdb chains
@@ -86,10 +88,10 @@ def add_pdb_author_chains(h5file):
 
 def get_remote_txt(url):
     # Make a hash from url that you could save to a filename
-    
+
     hash_object = hashlib.md5(url.encode())
     hex_dig = hash_object.hexdigest()
-    flnm = "./cache/" + hex_dig + ".txt"
+    flnm = f"./cache/{hex_dig}.txt"
 
     if os.path.exists(flnm):
         # Load the file
@@ -172,37 +174,37 @@ def add_scop2(h5file):
                     # so we will skip it
                     print(f"Skipping {pdbid} {chain} because there is no scop2 annotation.")
                     continue
-                
+
                 # Get the scop2_fam
                 scop2_fam = [v for v in r["rcsb_polymer_instance_annotation"] if v["type"] == "SCOP2"]
 
-                if len(scop2_fam) == 0:
+                if not scop2_fam:
                     print(f"Skipping {pdbid} {chain} because there is no scop2 annotation.")
                     continue
 
                 if "annotation_lineage" not in scop2_fam[0]:
                     print(f"Skipping {pdbid} {chain} because there is no scop2 annotation.")
                     continue
-                
+
                 scop2_fam = scop2_fam[0]["annotation_lineage"]
                 scop2_fam_id = [v for v in scop2_fam if v["depth"] == 3]
 
-                if len(scop2_fam_id) == 0:
+                if not scop2_fam_id:
                     print(f"Skipping {pdbid} {chain} because there is no scop2 annotation.")
                     continue
 
-                if not "id" in scop2_fam_id[0]:
+                if "id" not in scop2_fam_id[0]:
                     print(f"Skipping {pdbid} {chain} because there is no scop2 annotation.")
                     continue
-                
+
                 scop2_fam_id = scop2_fam_id[0]["id"]
                 scop2_fam_ids.append(scop2_fam_id)
-            except:
+            except Exception:
                 auth_chain = h5file[pdbid]["auth_chains"][()].decode('utf-8')
                 print(f"Error: {pdbid} {chain} [auth={auth_chain}]: {url}")
                 # import pdb; pdb.set_trace()
                 continue
-            
+
         # Unique
         scop2_fam_ids = list(set(scop2_fam_ids))
         scop2_fam_ids = ",".join(scop2_fam_ids)
@@ -225,7 +227,7 @@ def add_smiles(h5file):
         print(f"Processing {pdbid} to find smiles...")
 
         d = h5file[pdbid]['dir'][()].decode('utf-8')
-        flnm = d + '/' + pdbid + '_ligand.sdf'
+        flnm = f'{d}/{pdbid}_ligand.sdf'
         if not os.path.exists(flnm):
             print(f"Warning: {pdbid} has no ligand file.")
             continue
