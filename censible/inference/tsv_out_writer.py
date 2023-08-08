@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-
+import torch
 from censible.inference.term_descriptions import full_term_description
 
 
@@ -21,10 +21,8 @@ class TSVWriter:
         self.args = args
         self.lig_path = lig_path
 
-    def generate_summary(self, predicted_affinity: float):
-        import pdb
-
-        pdb.set_trace()
+    def generate_summary(self, predicted_affinity: torch.Tensor):
+        import pdb; pdb.set_trace()
         summary = f"receptor\t{self.args.recpath}\n"
         summary += f"ligand\t{self.lig_path}\n"
         summary += f"model\t{self.args.model_dir}\n\n"
