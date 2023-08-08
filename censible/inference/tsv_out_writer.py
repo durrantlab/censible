@@ -22,11 +22,10 @@ class TSVWriter:
         self.lig_path = lig_path
 
     def generate_summary(self, predicted_affinity: torch.Tensor):
-        import pdb; pdb.set_trace()
         summary = f"receptor\t{self.args.recpath}\n"
         summary += f"ligand\t{self.lig_path}\n"
         summary += f"model\t{self.args.model_dir}\n\n"
-        summary += f"predicted_affinity\t{str(round(predicted_affinity, 5))}\n"
+        summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)}\n"
 
         if self.args.out != "":
             summary = f"See {self.args.out} for predicted weights and contributions."
