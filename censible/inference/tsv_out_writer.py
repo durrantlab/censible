@@ -36,7 +36,7 @@ class TSVWriter:
 
         self.summary = summary
 
-        print(summary)
+        print(summary.strip())
 
     def generate_terms_weights_contributions(
         self,
