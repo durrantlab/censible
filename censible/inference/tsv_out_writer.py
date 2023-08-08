@@ -28,9 +28,9 @@ class TSVWriter:
         summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)}\n"
 
         if self.args.out != "":
-            summary = f"See {self.args.out} for predicted weights and contributions."
+            summary += f"See {self.args.out} for predicted weights and contributions."
         else:
-            summary = "WARNING: No output file specified (--out). Not saving weights and contributions."
+            summary += "WARNING: No output file specified (--out). Not saving weights and contributions."
 
         summary += "\n" + self.bar
 
