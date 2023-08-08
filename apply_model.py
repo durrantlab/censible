@@ -45,6 +45,7 @@ for lig_path in args.ligpath:
         smina_terms_masked,
     ) = apply(example, smina_terms_mask, norm_factors_masked, model)
 
+    print("\n")
     tsv_writer.generate_summary(predicted_affinity)
 
     tsv_writer.generate_terms_weights_contributions(

@@ -32,7 +32,7 @@ class TSVWriter:
         else:
             summary += "\nWARNING: No output file specified (--out). Not saving weights and contributions."
 
-        summary += "\n" + self.bar
+        summary += "\n\n" + self.bar + "\n"
 
         self.summary = summary
 
