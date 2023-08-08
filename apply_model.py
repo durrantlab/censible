@@ -47,8 +47,6 @@ for lig_path in args.ligpath:
 
     tsv_writer.generate_summary(predicted_affinity)
 
-    import pdb; pdb.set_trace()
-
     tsv_writer.generate_terms_weights_contributions(
         smina_ordered_terms_names,
         smina_terms_mask,
@@ -58,7 +56,7 @@ for lig_path in args.ligpath:
         contributions_predict,
     )
 
-    all_tsv_output += tsv_writer.contents
+    all_tsv_output += tsv_writer.content
 
 if args.out != "":
     with open(args.out, "w") as f:
