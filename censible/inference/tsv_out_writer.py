@@ -22,6 +22,12 @@ class TSVWriter:
         self.lig_path = lig_path
 
     def generate_summary(self, predicted_affinity: torch.Tensor):
+        """Generate the summary for the TSV output.
+        
+        Args:
+            predicted_affinity (torch.Tensor): The predicted affinity.
+        """
+
         summary = f"receptor\t{self.args.recpath}\n"
         summary += f"ligand\t{self.lig_path}\n"
         summary += f"model\t{self.args.model_dir}\n\n"
@@ -47,6 +53,12 @@ class TSVWriter:
         weights_predict,
         contributions_predict,
     ):
+        """Generate the terms, weights, and contributions for the TSV output.
+        
+        Args:
+            """
+        
+        import pdb; pdb.set_trace()
         if self.args.out == "":
             # If not specifying an output file, don't bother with the rest.
             return
@@ -105,5 +117,11 @@ class TSVWriter:
 
     @property
     def content(self):
+        """The content of the TSV output.
+
+        Returns:
+            str: The content of the TSV output.
+        """
+
         return self.summary + self.terms_weights_contributions
 
