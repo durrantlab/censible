@@ -47,6 +47,9 @@ for lig_path in args.ligpath:
 
     tsv_writer.generate_summary(predicted_affinity)
 
+    # Always print the summary.
+    print(tsv_writer.summary)
+
     tsv_writer.generate_terms_weights_contributions(
         smina_ordered_terms_names,
         smina_terms_mask,
