@@ -12,6 +12,6 @@ cache/
 *.old
 *.types
 
-*.npy
+# *.npy
 .vscode/
 .fuse*
