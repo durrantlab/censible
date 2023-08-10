@@ -2,14 +2,13 @@ import glob
 import os
 import concurrent.futures
 from tqdm import tqdm
-
-# Import prody
 import prody
 from rdkit import Chem
 import numpy as np
 from concurrent.futures import as_completed
 
 # prody.confProDy(verbosity='warning')
+
 
 def process_directory(d):
     pdbid = os.path.basename(d)
@@ -55,12 +54,13 @@ def process_directory(d):
     # Write the protein to a new pdb file
     prody.writePDB(f"{d}/{pdbid}_protein_centered.pdb", pdb)
 
+
 dirs = glob.glob("1.pdbbind2020/*/????")
 # dirs = glob.glob("1.pdbbind2020/*/1lag")
 
 
 # Set the number of workers to the number of available CPU cores
-num_workers = 12 # os.cpu_count()
+num_workers = 12  # os.cpu_count()
 
 # Use a ThreadPoolExecutor to parallelize the processing of directories
 with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:

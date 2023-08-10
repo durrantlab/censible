@@ -1,25 +1,17 @@
-# from openbabel import pybel
-# import json
-import numpy as np
-import os
 from censible.inference.inference import (
     get_cmd_args,
     load_example,
     load_model,
     apply,
 )
-from censible.inference.term_descriptions import full_term_description
 from censible.inference.tsv_out_writer import TSVWriter
 
 args = get_cmd_args()
 
 # load the model
-(
-    model,
-    smina_terms_mask,
-    norm_factors_masked,
-    smina_ordered_terms_names,
-) = load_model(args.model_dir)
+(model, smina_terms_mask, norm_factors_masked, smina_ordered_terms_names,) = load_model(
+    args.model_dir
+)
 
 print("")
 

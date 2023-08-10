@@ -1,4 +1,6 @@
 import itertools
+
+
 def grid_channel_to_xyz_file(grid_channel):
     """Converts a grid channel to a .xyz file for visualization in VMD.
     

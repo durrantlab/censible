@@ -64,7 +64,7 @@ class TSVWriter:
             weights_predict (np.ndarray): The predicted weights.
             contributions_predict (np.ndarray): The predicted contributions.
         """
-        
+
         if self.args.out == "":
             # If not specifying an output file, don't bother with the rest.
             return

@@ -1,4 +1,3 @@
-from typing import List
 from censible.data.get_data_paths import data_file_path
 import molgrid
 import torch
@@ -72,7 +71,9 @@ def preprocess(termtypes: str, data_dir: str):
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
 
-    precalc_term_scales = get_precalc_term_scales(all_terms, which_precalc_terms_to_keep)
+    precalc_term_scales = get_precalc_term_scales(
+        all_terms, which_precalc_terms_to_keep
+    )
 
     return which_precalc_terms_to_keep, term_names, precalc_term_scales
 

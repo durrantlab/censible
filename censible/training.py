@@ -4,14 +4,13 @@ import molgrid
 import torch
 import torch.optim as optim
 import os
-
-# from _debug import grid_channel_to_xyz_file
 import numpy as np
 from scipy.stats import pearsonr
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import init
-from censible.preprocess import remove_rare_terms
+
+# from _debug import grid_channel_to_xyz_file
 
 
 def load_split(
@@ -346,6 +345,7 @@ def weights_init(m: "AvgPool3d"):
         init.xavier_uniform_(m.weight.data)
         init.constant_(m.bias.data, 0)
 
+
 def get_args() -> dict:
     """Get arguments from the command line.
     
@@ -386,7 +386,7 @@ def get_args() -> dict:
             "name": "out_dir",
             "val": "./outputs/",
             "description": "Directory where the outputs are saved.",
-        }
+        },
     ]
 
     # Create argparser with same args as params
@@ -400,6 +400,7 @@ def get_args() -> dict:
         )
     args = parser.parse_args()
     return vars(args)  # Returns as dict
+
 
 def validate_params(params: dict) -> dict:
     """Validate the parameters. Also makes slight adjustments to ensure all
@@ -415,7 +416,7 @@ def validate_params(params: dict) -> dict:
     # Make sure termtypes is valid
     if params["termtypes"] not in ["all", "smina", "gaussian"]:
         raise ValueError("termtypes must be 'all', 'smina', or 'gaussian'")
-    
+
     # All directories should be absolute
     params["data_dir"] = os.path.abspath(params["data_dir"])
     params["out_dir"] = os.path.abspath(params["out_dir"])
@@ -423,13 +424,11 @@ def validate_params(params: dict) -> dict:
     # The data_dir must exist
     if not os.path.isdir(params["data_dir"]):
         raise ValueError("data_dir does not exist")
-    
+
     # Note that out_dir will be created later, so doesn't need to exist at this
     # point.
-    
+
     print(params)
 
     return params
-
-
 
