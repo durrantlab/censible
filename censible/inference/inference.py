@@ -27,8 +27,7 @@ def load_example(
     lig_path: str,
     rec_path: str,
     smina_exec_path: str,
-    smina_terms_mask,
-    smina_ordered_terms_names,
+    smina_ordered_terms_names: np.ndarray,
 ) -> molgrid.molgrid.ExampleProvider:
     """Load an example from a ligand and receptor path.
     
@@ -37,8 +36,6 @@ def load_example(
         rec_path (str): A string representing the path to the receptor.
         smina_exec_path (str): A string representing the path to the smina 
             executable.
-        smina_terms_mask (np.ndarray): A boolean array representing which terms
-            to keep.
         smina_ordered_terms_names (np.ndarray): A numpy array of strings 
             representing the names of all the terms.
             

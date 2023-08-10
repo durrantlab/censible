@@ -1,8 +1,7 @@
 import torch
-import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
-from censible.training import View
+from censible.view import View
 
 # from _debug import grid_channel_to_xyz_file
 

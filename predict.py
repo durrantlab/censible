@@ -26,7 +26,6 @@ for lig_path in args.ligpath:
         lig_path,
         args.recpath,
         args.smina_exec_path,
-        smina_terms_mask,
         smina_ordered_terms_names,
     )
 
