@@ -129,5 +129,5 @@ class TSVWriter:
             str: The content of the TSV output.
         """
 
-        return self.summary + self.terms_weights_contributions
+        return "CENsible 1.0\n\n" + self.summary + self.terms_weights_contributions
 

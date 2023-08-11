@@ -1,4 +1,4 @@
-# README: CENsible - Predicting Small-Molecule Binding Affinities
+# CENsible 1.0
 
 ## Introduction
 
@@ -7,6 +7,11 @@ binding affinities. Rather than predict a binding affinity directly, it predicts
 the contributions of pre-calculated terms to the overall affinity, thus
 providing interpretable output. CENsible insights are useful for subsequent lead
 optimization.
+
+We release CENsible under the terms of the [GNU General Public License
+v3.0](https://github.com/durrantlab/censible/blob/main/LICENSE.md). The git
+repository is available at
+[https://github.com/durrantlab/censible](https://github.com/durrantlab/censible).
 
 ## Installation
 
@@ -22,11 +27,9 @@ conda activate censible
 
 ### 2. Clone the Repository
 
-TODO: UPDATE REPO BELOW
-
 ```bash
-git clone https://github.com/durrantlab/cenet.git
-cd cenet
+git clone https://github.com/durrantlab/censible.git
+cd censible
 ```
 
 ### 3. Install Dependencies
