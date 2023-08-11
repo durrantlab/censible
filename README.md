@@ -29,6 +29,13 @@ dependencies in the `requirements_predict.txt` file:
 pip install -r requirements_predict.txt
 ```
 
+Note that `requirements_predict.txt` installs pytorch without CUDA support. If
+you wish to use CUDA, install pytorch separately.
+
+<!-- torch==1.9.1+cu111 -->
+
+
+
 3. SMINA executable, which is used for molecular docking simulations.
 
 ## Instructions to Use
