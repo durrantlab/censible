@@ -77,7 +77,7 @@ def load_example(
     example = molgrid.ExampleProvider(
         # data_root can be any directory, I think.
         # data_root="./",
-        default_batch_size=1,
+        default_batch_size=1
     )
     example.populate(smina_outfile)
 
@@ -117,12 +117,7 @@ def load_model(model_dir: str):
     with open(smina_ordered_terms_path) as f:
         smina_ordered_terms_names = f.read().strip().split()
 
-    return (
-        model,
-        smina_terms_mask,
-        norm_factors_masked,
-        smina_ordered_terms_names,
-    )
+    return (model, smina_terms_mask, norm_factors_masked, smina_ordered_terms_names)
 
 
 # apply model to test data
@@ -131,6 +126,7 @@ def apply(
     smina_terms_mask: np.ndarray,
     smina_norm_factors_masked: np.ndarray,
     model: CENet,
+    device="cuda"
 ):
     """Apply the model to the test data.
     
@@ -141,21 +137,22 @@ def apply(
         smina_norm_factors_masked (np.ndarray): The normalization factors for
             the terms.
         model (CENet): The model.
+        device (str): The device to use. Defaults to "cuda".
         
     Returns:
         A tuple containing the predicted affinity, weights, contributions, etc.
     """
 
-    smina_norm_factors_masked = torch.from_numpy(smina_norm_factors_masked).to("cuda")
+    smina_norm_factors_masked = torch.from_numpy(smina_norm_factors_masked).to(device)
 
-    smina_terms_mask_trch = torch.from_numpy(smina_terms_mask).to("cuda")
+    smina_terms_mask_trch = torch.from_numpy(smina_terms_mask).to(device)
 
     # Create tensors to store the precalculated terms and the input voxels.
     all_smina_terms = torch.zeros(
-        (1, example_data.num_labels()), dtype=torch.float32, device="cuda"
+        (1, example_data.num_labels()), dtype=torch.float32, device=device
     )
     input_voxel = torch.zeros(
-        (1,) + (28, 48, 48, 48), dtype=torch.float32, device="cuda"
+        (1,) + (28, 48, 48, 48), dtype=torch.float32, device=device
     )
 
     # Get this batch (just one example)
@@ -180,7 +177,7 @@ def apply(
     scaled_smina_terms_masked = smina_terms_masked * smina_norm_factors_masked
 
     # Run that through the model.
-    model.to("cuda")
+    model.to(device)
     predicted_affinity, weights_predict, contributions_predict = model(
         input_voxel, scaled_smina_terms_masked
     )
@@ -211,18 +208,51 @@ def get_cmd_args() -> argparse.Namespace:
 
     # Create argparser
     parser = argparse.ArgumentParser()
+
+    # Required parameters
     parser.add_argument(
         "--ligpath", required=True, nargs="+", help="path to the ligand(s)"
     )
+
     parser.add_argument("--recpath", required=True, help="path to the receptor")
+
+    parser.add_argument(
+        "--smina_exec_path", required=True, help="path to the smina executable"
+    )
+
+    # Use store_true
+    parser.add_argument(
+        "--use_cpu", action="store_true", help="use cpu (uses cuda by default, if not specified)"
+    )
+
+    # Optional parameters
     parser.add_argument(
         "--model_dir",
-        default="./",
+        default=None,
         help="path to a directory containing files such as model.pt, which_precalc_terms_to_keep.npy, etc.",
     )
 
-    parser.add_argument("--smina_exec_path", help="path to the smina executable")
     parser.add_argument("--out", default="", help="path to save output tsv file")
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Do some validation
+    # Check if ligpath exists
+    for ligpath in args.ligpath:
+        if not os.path.exists(ligpath):
+            raise FileNotFoundError(f"{ligpath} does not exist")
+
+    # Check if recpath exists
+    if not os.path.exists(args.recpath):
+        raise FileNotFoundError(f"{args.recpath} does not exist")
+
+    # Check if smina_exec_path exists
+    if not os.path.exists(args.smina_exec_path):
+        raise FileNotFoundError(f"{args.smina_exec_path} does not exist")
+    
+    # If model_dir is not provided, use the default model_dir
+    if args.model_dir is None:
+        args.model_dir = data_file_path("model_allcen" + os.sep)
+
+    return args
 

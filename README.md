@@ -3,14 +3,14 @@
 ## Introduction
 
 CENsible uses context explanation networks (CENs) to predict small-molecule
-binding affinities. Rather than predict the binding affinity directly, it
-predicts the contributions of pre-calculated terms to the overall affinity,
-providing an interpretable output. These insights are useful for subsequent lead
+binding affinities. Rather than predict a binding affinity directly, it predicts
+the contributions of pre-calculated terms to the overall affinity, thus
+providing interpretable output. CENsible insights are useful for subsequent lead
 optimization.
 
-## Prerequisites
+## Installation
 
-1. **Install Python:**
+### 1. Install Python
 
 We recommend using anaconda python to create a new environment. We have tested
 CENsible on Python 3.9.16.
@@ -20,7 +20,16 @@ conda create -n censible python=3.9.16
 conda activate censible
 ```
 
-2. **Install Dependencies**
+### 2. Clone the Repository
+
+TODO: UPDATE REPO BELOW
+
+```bash
+git clone https://github.com/durrantlab/cenet.git
+cd cenet
+```
+
+### 3. Install Dependencies
 
 If you wish only to use CENsible for inference (prediction), install the
 dependencies in the `requirements_predict.txt` file:
@@ -29,57 +38,113 @@ dependencies in the `requirements_predict.txt` file:
 pip install -r requirements_predict.txt
 ```
 
-3. SMINA executable, which is used for molecular docking simulations.
+**NOTE:** If you don't have CUDA installed on your system, you may need to edit
+the `requirements_predict.txt` file to install the CPU version of PyTorch. If
+so, use the `--use_cpu` flag when running the script (see below).
 
-## Instructions to Use
+### 4. Install *smina*
 
-1. **Clone the Repository (if applicable)**:
+CENsible uses *smina* to calculate the pre-calculated terms. Visit the [smina
+repository](https://sourceforge.net/projects/smina/) to download the latest
+version.
 
-    ```python
-    git clone <repository_link>
-    cd <repository_directory>
-    ```
+As of August 10, 2023, you can install *smina* using anaconda:
 
-2. **Prepare your Input Data**:
-    - Have your ligand(s) and receptor files ready. The ligand(s) paths are
-      expected as a list (even if there's only one), while the receptor path is
-      a single file.
+```bash
+conda install -c conda-forge smina
+```
 
-3. **Set up the Model**:
-    - Ensure you have the trained model and other required files in a directory.
-      By default, CENsible looks for `model.pt` and other files in the current
-      directory. If you have them in another directory, you'll need to specify
-      that using the `--model_dir` option.
+### 5. Test the CENsible Installation
 
-4. **Run CENsible**:
-    Use the command below, replacing placeholders with the appropriate paths:
+To test the installation, run the following command:
 
-    ```python
-    python predict.py --ligpath <path_to_ligand1> <path_to_ligand2> ... --recpath <path_to_receptor> --model_dir <path_to_model_directory> --smina_exec_path <path_to_smina_executable> --out <path_to_output_tsv>
-    ```
+```bash
+./test_predict.sh
+```
 
-   Example:
+**NOTE:** This script assumes *smina* is in your PATH. Additionally, if you have
+installed a version of pytorch that does not support CUDA, you will need to edit
+the `test_predict.sh` file to add the `--use_cpu` flag.
 
-   ```python
-   python predict.py --ligpath ./ligands/ligand1.mol2 ./ligands/ligand2.mol2 --recpath ./receptor.pdb --model_dir ./models/ --smina_exec_path /usr/local/bin/smina --out ./output/results.tsv
-   ```
+## Usage
 
-5. **Check the Output**:
-   - After running the script, if you provided an output path using `--out`, the
-     results will be saved as a TSV file at the specified location.
-   - If not, the results will be displayed in the terminal.
+### Simple Use
 
-6. **Interpret the Results**:
-   - The TSV output contains the predicted affinity for each ligand-receptor
-     pair, followed by term-wise contributions.
-   - Use these insights for subsequent lead optimization in drug design.
+Here is a simple example of how to use CENsible for inference (prediction):
 
-## Support
+```bash
+python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
+                  --recpath censible/data/test/1wdn_receptor.pdb \
+                  --smina_exec_path /usr/local/bin/smina
+```
 
-For any issues or questions, please refer to the FAQ section in the
-documentation or reach out to the CENsible team.
+**NOTE:** You should replace the `--ligpath` and `--recpath` arguments with the
+path to your ligand and receptor files, respectively. You should also replace
+the `--smina_exec_path` argument with the path to your smina executable.
 
----
+### Saving CENsible Weights
 
-We hope you find CENsible beneficial for your research and drug design
-endeavors!
+In the above simple example, CENsible only outputs the predicted affinity. If
+you wish to also output CENsible's predicted weights (as well as other
+information used to calculate the final score), use the `--out` flag:
+
+```bash
+python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
+                  --recpath censible/data/test/1wdn_receptor.pdb \
+                  --smina_exec_path /usr/local/bin/smina \
+                  --out test_out.tsv 
+```
+
+### Using Other CENsible Models
+
+CENsible comes with a pre-trained model (described in the accompanying
+manuscript, see `censible/data/model_allcen/`). If you wish to use your own
+model, specify the path to the model directory using the `--model_dir` flag:
+
+```bash
+python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
+                  --recpath censible/data/test/1wdn_receptor.pdb \
+                  --smina_exec_path /usr/local/bin/smina \
+                  --model_dir ./my_model_dir/ \
+                  --out test_out.tsv 
+```
+
+The model directory should contain the following files:
+
+- `model.pt`: The trained model.
+- `precalc_term_scales.npy`: The pre-calculated term scales.
+- `which_precalc_terms_to_keep.npy`: The pre-calculated terms the model uses.
+
+## CENsible Output
+
+### Without the `--out` Flag
+
+If you do not use the `--out` flag, CENsible will only report the predicted
+affinity. For example:
+
+```text
+receptor	censible/data/test/1wdn_receptor.pdb
+ligand	censible/data/test/1wdn_ligand.mol2
+model	/mnt/Data/jdurrant/cenet/censible/data/model_allcen/
+
+predicted_affinity	5.81088
+
+WARNING: No output file specified (--out). Not saving weights and contributions.
+
+=====================================
+```
+
+### With the `--out` Flag
+
+If the user specifies the `--out` flag, CENsible will output the same
+information to the specified Excel-comaptible tab-delimited file. Additionally,
+it will output:
+
+- A text description of the pre-calculated terms the model uses.
+- The pre-calculated terms themselves (calculated using *smina*).
+- The pre-calculated terms after scaling/normalization.
+- The weights the model assigns to each pre-calculated term.
+- The predicted contribution of each pre-calculated term to the overall affinity
+  (i.e., the product of the normalized pre-calculated term and its weight).
+
+**NOTE:** The final affinity is the sum of the predicted contributions.
