@@ -1,7 +1,10 @@
-Need to add README.md
+Need to add README.md. Done, but run through it from scratch to confirm works.
 
 Need to update prepare_data/ files. Need to auto detect if user hasn't prepared
-that directory. Need to test.
+that directory. Need to test. Perhaps move everyhting to train, organize scripts
+as best you can, but then say not supported.
+
+Colab?
 
 # DONE
 

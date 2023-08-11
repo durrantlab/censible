@@ -126,6 +126,8 @@ If you do not use the `--out` flag, CENsible will only report the predicted
 affinity. For example:
 
 ```text
+CENsible 1.0
+
 receptor	censible/data/test/1wdn_receptor.pdb
 ligand	censible/data/test/1wdn_ligand.mol2
 model	/mnt/Data/jdurrant/cenet/censible/data/model_allcen/

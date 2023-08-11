@@ -94,7 +94,7 @@ def full_term_description(term: str) -> str:
     elif term == "num_hydrophobic_atoms":
         return "number of hydrophobic atoms"
     elif term == "ligand_length":
-        return "lenght of the ligand"
+        return "length of the ligand"
     elif term in {"num_tors_sqr", "num_tors_sqrt"}:
         return "meaning uncertain"  # TODO: ask David
     else:
