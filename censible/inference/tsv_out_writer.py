@@ -29,7 +29,8 @@ class TSVWriter:
             predicted_affinity (torch.Tensor): The predicted affinity.
         """
 
-        summary = f"receptor\t{self.args.recpath}\n"
+        summary = "CENsible 1.0\n\n"
+        summary += f"receptor\t{self.args.recpath}\n"
         summary += f"ligand\t{self.lig_path}\n"
         summary += f"model\t{self.args.model_dir}\n\n"
         summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)}\n"
@@ -129,5 +130,5 @@ class TSVWriter:
             str: The content of the TSV output.
         """
 
-        return "CENsible 1.0\n\n" + self.summary + self.terms_weights_contributions
+        return self.summary + self.terms_weights_contributions
 
