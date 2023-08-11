@@ -12,6 +12,6 @@ cache/
 *.old
 *.types
 
-# *.npy
+prepare_data/*.npy
 .vscode/
 .fuse*

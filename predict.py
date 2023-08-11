@@ -1,15 +1,10 @@
-from censible.inference.inference import (
-    get_cmd_args,
-    load_example,
-    load_model,
-    apply,
-)
+from censible.inference.inference import get_cmd_args, load_example, load_model, apply
 from censible.inference.tsv_out_writer import TSVWriter
 
 args = get_cmd_args()
 
 # load the model
-(model, smina_terms_mask, norm_factors_masked, smina_ordered_terms_names,) = load_model(
+(model, smina_terms_mask, norm_factors_masked, smina_ordered_terms_names) = load_model(
     args.model_dir
 )
 
@@ -23,10 +18,7 @@ for lig_path in args.ligpath:
     # Load the data. TODO: One ligand at a time here for simplicity's sake.
     # Could batch to improve speed, I think.
     example = load_example(
-        lig_path,
-        args.recpath,
-        args.smina_exec_path,
-        smina_ordered_terms_names,
+        lig_path, args.recpath, args.smina_exec_path, smina_ordered_terms_names
     )
 
     (
@@ -34,7 +26,13 @@ for lig_path in args.ligpath:
         weights_predict,
         contributions_predict,
         smina_terms_masked,
-    ) = apply(example, smina_terms_mask, norm_factors_masked, model)
+    ) = apply(
+        example,
+        smina_terms_mask,
+        norm_factors_masked,
+        model,
+        "cpu" if args.use_cpu else "cuda",
+    )
 
     print("\n")
     tsv_writer.generate_summary(predicted_affinity)
