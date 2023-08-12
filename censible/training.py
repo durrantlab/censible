@@ -370,7 +370,8 @@ def get_args() -> dict:
         },
         {
             "name": "data_dir",
-            "val": "./prepare_data/",
+            # "val": "./train/",
+            "val": "./",
             "description": "Directory where the data is stored.",
         },
         {

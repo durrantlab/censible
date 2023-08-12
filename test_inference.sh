@@ -26,11 +26,11 @@ cat ${lig} | gunzip > ./scratch/${bsnm}
 # Iterate through all imgs/all-fold* directories and run inference on the test set
 for model_dir in /mnt/Data/jdurrant/cenet/imgs/all-fold*; do
     # Get all the splits
-    python /mnt/Data/jdurrant/cenet/apply_model.py --ligpath scratch/${bsnm}.split${posenum}.pdbqt --recpath ${recep} --model_dir $model_dir --smina_exec_path /mnt/Data/jdurrant/cenet/prepare_data/smina/smina.static --out scratch/${bsnm}.split${posenum}.cenet.inf >> scratch/${bsnm}.split${posenum}.cenet.out
+    python /mnt/Data/jdurrant/cenet/apply_model.py --ligpath scratch/${bsnm}.split${posenum}.pdbqt --recpath ${recep} --model_dir $model_dir --smina_exec_path /mnt/Data/jdurrant/cenet/train/smina/smina.static --out scratch/${bsnm}.split${posenum}.cenet.inf >> scratch/${bsnm}.split${posenum}.cenet.out
 
     # for lig in scratch/${bsnm}*.split*.pdbqt; do
     #     echo $model_dir $lig
-    #     echo "python apply_model.py --ligpath ${lig} --recpath 5.4EG4_no_extra_ligs.no_wats.not_lig.CAS_to_CYS.pdb --model_dir $model_dir --smina_exec_path /mnt/Data/jdurrant/cenet/prepare_data/smina/smina.static >> ${lig}.cenet.out"
+    #     echo "python apply_model.py --ligpath ${lig} --recpath 5.4EG4_no_extra_ligs.no_wats.not_lig.CAS_to_CYS.pdb --model_dir $model_dir --smina_exec_path /mnt/Data/jdurrant/cenet/train/smina/smina.static >> ${lig}.cenet.out"
     #     --out_prefix testtt 
     # done
 done

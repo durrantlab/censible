@@ -1,3 +1,8 @@
+# add ../ to the path
+import sys
+
+sys.path.append("..")
+
 from censible.training import get_args, train_single_fold, validate_params
 from censible.outputs import save_outputs
 from censible.CEN_model import CENet

@@ -9,14 +9,13 @@ import numpy as np
 import glob
 import os
 
-# conda activate py39
-
 # First get affinities
-affinity_lines = open("1.pdbbind2020/refined-set/index/INDEX_refined_set.2020").readlines()
-affinity_lines += open("1.pdbbind2020/refined-set/index/INDEX_general_PL.2020").readlines()
+affinity_lines = open("pdbbind/refined-set/index/INDEX_refined_set.2020").readlines()
+affinity_lines += open("pdbbind/refined-set/index/INDEX_general_PL.2020").readlines()
 
 # Remove lines that start with "#"
 affinity_lines = [line for line in affinity_lines if not line.startswith("#")]
+
 # Remove empty lines
 affinity_lines = [line for line in affinity_lines if line.strip() != ""]
 
@@ -24,11 +23,8 @@ affinity_lines = [line for line in affinity_lines if line.strip() != ""]
 affinity_dict = {line.split()[0]: line.split()[3] for line in affinity_lines}
 
 # Map pdbids to their paths too
-paths = glob.glob("1.pdbbind2020/refined-set/????") + glob.glob("1.pdbbind2020/v2020-other-PL/????")
+paths = glob.glob("pdbbind/refined-set/????") + glob.glob("pdbbind/v2020-other-PL/????")
 paths = {os.path.basename(path): path for path in paths}
-
-# Need to convert the values into pK(affinity)
-# pK(affinity) = -log10(affinity)
 
 pdbids_to_remove = []
 
@@ -53,7 +49,11 @@ for pdbid, affinity in affinity_dict.items():
 
     # If affinity is "<" than something, and that something is uM, and the
     # something is < 1 (so really nM), assume it is equal.
-    if "<" in affinity and "uM" in affinity and float(affinity.split("<")[1].split("uM")[0]) < 1:
+    if (
+        "<" in affinity
+        and "uM" in affinity
+        and float(affinity.split("<")[1].split("uM")[0]) < 1
+    ):
         affinity = affinity.replace("<", "=")
 
     if "=" not in affinity:
@@ -76,8 +76,8 @@ for pdbid, affinity in affinity_dict.items():
 for pdbid in pdbids_to_remove:
     del affinity_dict[pdbid]
 
-with open("all_centered.types", "w") as g:
-    with open("all.types", "w") as f:
-        for pdbid in affinity_dict:
-            f.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.gninatypes {paths[pdbid]}/{pdbid}_ligand.gninatypes\n")
-            g.write(f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein_centered.gninatypes {paths[pdbid]}/{pdbid}_ligand_centered.gninatypes\n")
+with open("all.types", "w") as f:
+    for pdbid in affinity_dict:
+        f.write(
+            f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.gninatypes {paths[pdbid]}/{pdbid}_ligand.gninatypes\n"
+        )

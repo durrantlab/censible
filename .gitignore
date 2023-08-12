@@ -12,6 +12,7 @@ cache/
 *.old
 *.types
 
-prepare_data/*.npy
+train/*.npy
 .vscode/
 .fuse*
+train/pdbbind
