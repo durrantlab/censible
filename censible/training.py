@@ -1,5 +1,5 @@
 import argparse
-from typing import Any
+from typing import Any, Tuple
 import molgrid
 import torch
 import torch.optim as optim
@@ -15,7 +15,7 @@ from torch.nn import init
 
 def load_split(
     types_filename: str, batch_size: int, data_dir: str, is_training_set: bool = False
-) -> tuple[molgrid.molgrid.ExampleProvider, Any]:
+) -> Tuple[molgrid.molgrid.ExampleProvider, Any]:
     """Loads the data from the types file .
     
     Args:
