@@ -34,6 +34,8 @@ class TSVWriter:
         summary += f"ligand\t{self.lig_path}\n"
         summary += f"model\t{self.args.model_dir}\n\n"
 
+        predicted_affinity = float(predicted_affinity)
+
         # affinity is -log10(Kd). Convert back to Kd, using fM, pM, nM, µM, mM,
         # M, etc.
         kd = 10**(-predicted_affinity)
@@ -51,7 +53,7 @@ class TSVWriter:
             kd = f"{kd:.2f} M"
 
 
-        summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)} ({kd})\n"
+        summary += f"predicted_affinity\t{round(predicted_affinity, 5)} ({kd})\n"
 
         if self.args.out != "":
             summary += f"\nSee {self.args.out} for predicted weights and contributions."
