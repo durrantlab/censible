@@ -30,9 +30,9 @@ class TSVWriter:
         """
 
         summary = "CENsible 1.0\n\n"
-        summary += f"receptor\t{self.args.recpath}\n"
-        summary += f"ligand\t{self.lig_path}\n"
-        summary += f"model\t{self.args.model_dir}\n\n"
+        summary += f"receptor: {self.args.recpath}\n"
+        summary += f"ligand:   {self.lig_path}\n"
+        summary += f"model:    {self.args.model_dir}\n\n"
 
         predicted_affinity = float(predicted_affinity)
 
@@ -52,7 +52,7 @@ class TSVWriter:
         else:
             kd = f"{kd:.2f} M"
 
-        summary += f"score:\t{round(predicted_affinity, 5)} ({kd})\n"
+        summary += f"score:    {round(predicted_affinity, 5)} ({kd})\n"
 
         if self.args.out != "":
             summary += f"\nSee {self.args.out} for predicted weights and contributions."
