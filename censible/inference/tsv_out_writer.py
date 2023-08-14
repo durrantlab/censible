@@ -51,7 +51,7 @@ class TSVWriter:
             kd = f"{kd:.2f} M"
 
 
-        summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)} ({kd})\n"
+        summary += f"score:\t{round(float(predicted_affinity), 5)} ({kd})\n"
 
         if self.args.out != "":
             summary += f"\nSee {self.args.out} for predicted weights and contributions."

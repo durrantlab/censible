@@ -136,7 +136,7 @@ receptor  censible/data/test/1wdn_receptor.pdb
 ligand  censible/data/test/1wdn_ligand.mol2
 model /mnt/Data/jdurrant/cenet/censible/data/model_allcen/
 
-predicted_affinity  5.81088
+score:  5.81088 (1.55 µM)
 
 WARNING: No output file specified (--out). Not saving weights and contributions.
 
