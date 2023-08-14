@@ -132,11 +132,11 @@ affinity. For example:
 ```text
 CENsible 1.0
 
-receptor  censible/data/test/1wdn_receptor.pdb
-ligand  censible/data/test/1wdn_ligand.mol2
-model /mnt/Data/jdurrant/cenet/censible/data/model_allcen/
+receptor: censible/data/test/1wdn_receptor.pdb
+ligand:   censible/data/test/1wdn_ligand.mol2
+model:    /mnt/Data/jdurrant/cenet/censible/data/model_allcen/
 
-score:  5.81088 (1.55 µM)
+score:    5.81088 (1.55 µM)
 
 WARNING: No output file specified (--out). Not saving weights and contributions.
 
