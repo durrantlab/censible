@@ -1,12 +1,14 @@
+Colab? Update link in README.md.
+
+Mention output is pK(affinity) somewhere. Output in terms of mM?
+
+# DONE
+
 Need to add README.md. Done, but run through it from scratch to confirm works.
 
 Need to update prepare_data/ files. Need to auto detect if user hasn't prepared
 that directory. Need to test. Perhaps move everyhting to train, organize scripts
 as best you can, but then say not supported.
-
-Colab?
-
-# DONE
 
 To consider: at inference time, will users have to use gninatyper to prepare
 their molecules? That seems impractical.

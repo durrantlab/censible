@@ -33,7 +33,25 @@ class TSVWriter:
         summary += f"receptor\t{self.args.recpath}\n"
         summary += f"ligand\t{self.lig_path}\n"
         summary += f"model\t{self.args.model_dir}\n\n"
-        summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)}\n"
+
+        # affinity is -log10(Kd). Convert back to Kd, using fM, pM, nM, µM, mM,
+        # M, etc.
+        kd = 10**(-predicted_affinity)
+        if kd < 1e-12:
+            kd = f"{kd*1e15:.2f} fM"
+        elif kd < 1e-9:
+            kd = f"{kd*1e12:.2f} pM"
+        elif kd < 1e-6:
+            kd = f"{kd*1e9:.2f} nM"
+        elif kd < 1e-3:
+            kd = f"{kd*1e6:.2f} µM"
+        elif kd < 1:
+            kd = f"{kd*1e3:.2f} mM"
+        else:
+            kd = f"{kd:.2f} M"
+
+
+        summary += f"predicted_affinity\t{round(float(predicted_affinity), 5)} ({kd})\n"
 
         if self.args.out != "":
             summary += f"\nSee {self.args.out} for predicted weights and contributions."

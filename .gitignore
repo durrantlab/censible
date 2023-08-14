@@ -16,3 +16,4 @@ train/*.npy
 .vscode/
 .fuse*
 train/pdbbind
+.DS_Store

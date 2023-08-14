@@ -12,6 +12,10 @@ We release CENsible under the terms of the [GNU General Public License
 v3.0](https://github.com/durrantlab/censible/blob/main/LICENSE.md). The git
 repository is available at
 [https://github.com/durrantlab/censible](https://github.com/durrantlab/censible).
+A working Google Colab demo is available at **URL HERE**.
+
+These instructions describe how to use CENsible for inference (prediction). If
+you wish to train your own CENsible model, see `train/README.md` for some tips.
 
 ## Installation
 
@@ -43,15 +47,15 @@ pip install -r requirements_predict.txt
 
 **NOTE:** If you don't have CUDA installed on your system, you may need to edit
 the `requirements_predict.txt` file to install the CPU version of PyTorch. If
-so, use the `--use_cpu` flag when running the script (see below).
+so, run the script using the `--use_cpu` flag (see below).
 
-### 4. Install *smina*
+### 4. Install _smina_
 
-CENsible uses *smina* to calculate the pre-calculated terms. Visit the [smina
+CENsible uses _smina_ to calculate the pre-calculated terms. Visit the [smina
 repository](https://sourceforge.net/projects/smina/) to download the latest
 version.
 
-As of August 10, 2023, you can install *smina* using anaconda:
+As of August 10, 2023, you can install _smina_ using Anaconda:
 
 ```bash
 conda install -c conda-forge smina
@@ -65,9 +69,9 @@ To test the installation, run the following command:
 ./test_predict.sh
 ```
 
-**NOTE:** This script assumes *smina* is in your PATH. Additionally, if you have
-installed a version of pytorch that does not support CUDA, you will need to edit
-the `test_predict.sh` file to add the `--use_cpu` flag.
+**NOTE:** This script assumes _smina_ is in your PATH. Additionally, if you have
+installed a version of Pytorch that does not support CUDA, you must edit the
+`test_predict.sh` file to add the `--use_cpu` flag.
 
 ## Usage
 
@@ -88,14 +92,14 @@ the `--smina_exec_path` argument with the path to your smina executable.
 ### Saving CENsible Weights
 
 In the above simple example, CENsible only outputs the predicted affinity. If
-you wish to also output CENsible's predicted weights (as well as other
+you also wish to output CENsible's predicted weights (as well as other
 information used to calculate the final score), use the `--out` flag:
 
 ```bash
 python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path /usr/local/bin/smina \
-                  --out test_out.tsv 
+                  --out test_out.tsv
 ```
 
 ### Using Other CENsible Models
@@ -109,14 +113,14 @@ python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path /usr/local/bin/smina \
                   --model_dir ./my_model_dir/ \
-                  --out test_out.tsv 
+                  --out test_out.tsv
 ```
 
 The model directory should contain the following files:
 
-- `model.pt`: The trained model.
-- `precalc_term_scales.npy`: The pre-calculated term scales.
-- `which_precalc_terms_to_keep.npy`: The pre-calculated terms the model uses.
+-   `model.pt`: The trained model.
+-   `precalc_term_scales.npy`: The pre-calculated term scales.
+-   `which_precalc_terms_to_keep.npy`: The pre-calculated terms the model uses.
 
 ## CENsible Output
 
@@ -128,11 +132,11 @@ affinity. For example:
 ```text
 CENsible 1.0
 
-receptor	censible/data/test/1wdn_receptor.pdb
-ligand	censible/data/test/1wdn_ligand.mol2
-model	/mnt/Data/jdurrant/cenet/censible/data/model_allcen/
+receptor  censible/data/test/1wdn_receptor.pdb
+ligand  censible/data/test/1wdn_ligand.mol2
+model /mnt/Data/jdurrant/cenet/censible/data/model_allcen/
 
-predicted_affinity	5.81088
+predicted_affinity  5.81088
 
 WARNING: No output file specified (--out). Not saving weights and contributions.
 
@@ -142,11 +146,11 @@ WARNING: No output file specified (--out). Not saving weights and contributions.
 ### With the `--out` Flag
 
 If the user specifies the `--out` flag, CENsible will output the same
-information to the specified Excel-comaptible tab-delimited file. Additionally,
-it will output:
+information to the specified Excel-compatible tab-delimited file. Additionally,
+it will output the following:
 
 - A text description of the pre-calculated terms the model uses.
-- The pre-calculated terms themselves (calculated using *smina*).
+- The pre-calculated terms themselves (calculated using _smina_).
 - The pre-calculated terms after scaling/normalization.
 - The weights the model assigns to each pre-calculated term.
 - The predicted contribution of each pre-calculated term to the overall affinity

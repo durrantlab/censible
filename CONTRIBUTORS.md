@@ -1,5 +1,6 @@
 Contributors
 ============
 
-* Jacob Durrant
 * Roshni Bhatt
+* Jacob Durrant
+* David Koes
