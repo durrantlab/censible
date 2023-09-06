@@ -10,6 +10,7 @@ import os
 import numpy as np
 import tempfile
 
+
 def is_numeric(s: str) -> bool:
     """Return a boolean representing if the string s is a numeric string.
     
@@ -22,26 +23,31 @@ def is_numeric(s: str) -> bool:
 
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
-def strip_charges_from_pdbqt(filename):
+
+def strip_charges_from_pdbqt(filename: str) -> str:
     """Strip charges from a pdbqt file.
     
     Args:
         filename (str): The path to the pdbqt file.
+
+    Returns:
+        A string representing the path to the temporary file.
     """
 
     with open(filename) as f:
         lines = f.readlines()
-    
+
     # Create a temporary file ending in .pdb
     with tempfile.NamedTemporaryFile(suffix=".pdb") as tmp:
         for line in lines:
-            if line.startswith("ATOM"):
-                line = line[:69] + "\n"
-            print(line)
-            tmp.write(line)
+            if line.startswith("ATOM") or line.startswith("HETATM"):
+                line = line[:54] + "\n"
+            # print(line)
+            tmp.write(line.encode())
 
-strip_charges_from_pdbqt("/home/jdurrant/t.pdbqt")
-sdfdsf
+    # Return the path to the temporary file
+    return tmp.name
+
 
 def load_example(
     lig_path: str,
@@ -62,6 +68,10 @@ def load_example(
     Returns:
         A molgrid ExampleProvider.
     """
+
+    # If the ligand is a pdbqt file, strip the charges.
+    if lig_path.endswith(".pdbqt"):
+        lig_path = strip_charges_from_pdbqt(lig_path)
 
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
@@ -146,7 +156,7 @@ def apply(
     smina_terms_mask: np.ndarray,
     smina_norm_factors_masked: np.ndarray,
     model: CENet,
-    device="cuda"
+    device="cuda",
 ):
     """Apply the model to the test data.
     
@@ -242,7 +252,9 @@ def get_cmd_args() -> argparse.Namespace:
 
     # Use store_true
     parser.add_argument(
-        "--use_cpu", action="store_true", help="use cpu (uses cuda by default, if not specified)"
+        "--use_cpu",
+        action="store_true",
+        help="use cpu (uses cuda by default, if not specified)",
     )
 
     # Optional parameters
