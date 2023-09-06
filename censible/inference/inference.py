@@ -8,7 +8,7 @@ from censible.CEN_model import CENet
 import random
 import os
 import numpy as np
-
+import tempfile
 
 def is_numeric(s: str) -> bool:
     """Return a boolean representing if the string s is a numeric string.
@@ -22,6 +22,26 @@ def is_numeric(s: str) -> bool:
 
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
+def strip_charges_from_pdbqt(filename):
+    """Strip charges from a pdbqt file.
+    
+    Args:
+        filename (str): The path to the pdbqt file.
+    """
+
+    with open(filename) as f:
+        lines = f.readlines()
+    
+    # Create a temporary file ending in .pdb
+    with tempfile.NamedTemporaryFile(suffix=".pdb") as tmp:
+        for line in lines:
+            if line.startswith("ATOM"):
+                line = line[:69] + "\n"
+            print(line)
+            tmp.write(line)
+
+strip_charges_from_pdbqt("/home/jdurrant/t.pdbqt")
+sdfdsf
 
 def load_example(
     lig_path: str,
@@ -249,10 +269,10 @@ def get_cmd_args() -> argparse.Namespace:
     # Check if smina_exec_path exists
     if not os.path.exists(args.smina_exec_path):
         raise FileNotFoundError(f"{args.smina_exec_path} does not exist")
-    
+
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
-        args.model_dir = data_file_path("model_allcen" + os.sep)
+        args.model_dir = data_file_path(f"model_allcen{os.sep}")
 
     return args
 

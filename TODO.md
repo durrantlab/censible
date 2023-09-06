@@ -1,8 +1,10 @@
 Colab? Update link in README.md.
 
-Mention output is pK(affinity) somewhere. Output in terms of mM?
+Be sure to remove existing charges.
 
 # DONE
+
+Mention output is pK(affinity) somewhere. Output in terms of mM?
 
 Need to add README.md. Done, but run through it from scratch to confirm works.
 
