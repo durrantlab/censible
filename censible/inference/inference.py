@@ -80,6 +80,8 @@ def load_example(
     # If the ligand is a pdbqt file, strip the charges.
     if lig_path.endswith(".pdbqt"):
         lig_path = strip_charges_from_pdbqt(lig_path)
+    if rec_path.endswith(".pdbqt"):
+        rec_path = strip_charges_from_pdbqt(rec_path)
 
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
@@ -249,10 +251,10 @@ def get_cmd_args() -> argparse.Namespace:
 
     # Required parameters
     parser.add_argument(
-        "--ligpath", required=True, nargs="+", help="path to the ligand(s)"
+        "--ligpath", required=True, nargs="+", help="path to the ligand(s) (PDB or PDBQT format)"
     )
-
-    parser.add_argument("--recpath", required=True, help="path to the receptor")
+ 
+    parser.add_argument("--recpath", required=True, help="path to the receptor (PDB or PDBQT format)")
 
     parser.add_argument(
         "--smina_exec_path", required=True, help="path to the smina executable"
@@ -293,6 +295,15 @@ def get_cmd_args() -> argparse.Namespace:
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
         args.model_dir = data_file_path(f"model_allcen{os.sep}")
+
+    # ligpath must end in .pdb or .pdbqt
+    for ligpath in args.ligpath:
+        if not ligpath.endswith(".pdb") and not ligpath.endswith(".pdbqt"):
+            raise ValueError(f"{ligpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges.")
+        
+    # Same for recpath
+    if not args.recpath.endswith(".pdb") and not args.recpath.endswith(".pdbqt"):
+        raise ValueError(f"{args.recpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges.")
 
     return args
 
