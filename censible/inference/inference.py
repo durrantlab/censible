@@ -38,15 +38,23 @@ def strip_charges_from_pdbqt(filename: str) -> str:
         lines = f.readlines()
 
     # Create a temporary file ending in .pdb
-    with tempfile.NamedTemporaryFile(suffix=".pdb") as tmp:
+    new_filename = filename + ".converted.pdb"
+    with open(new_filename, "w") as tmp:
         for line in lines:
-            if line.startswith("ATOM") or line.startswith("HETATM"):
-                line = line[:54] + "\n"
-            # print(line)
-            tmp.write(line.encode())
+            if (
+                line.startswith("ATOM")
+                or line.startswith("HETATM")
+                or line.startswith("MODEL")
+                or line == "ENDMDL\n"
+                or line == "END\n"
+            ):
+                if line.startswith("ATOM") or line.startswith("HETATM"):
+                    line = line[:54] + "\n"
+                # print(line)
+                tmp.write(line)
 
     # Return the path to the temporary file
-    return tmp.name
+    return new_filename
 
 
 def load_example(
