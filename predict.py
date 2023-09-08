@@ -18,7 +18,11 @@ for lig_path in args.ligpath:
     # Load the data. TODO: One ligand at a time here for simplicity's sake.
     # Could batch to improve speed, I think.
     example = load_example(
-        lig_path, args.recpath, args.smina_exec_path, smina_ordered_terms_names
+        lig_path,
+        args.recpath,
+        args.smina_exec_path,
+        smina_ordered_terms_names,
+        args.obabel_exec_path,
     )
 
     (

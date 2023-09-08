@@ -17,3 +17,4 @@ train/*.npy
 .fuse*
 train/pdbbind
 .DS_Store
+*.converted.pdb

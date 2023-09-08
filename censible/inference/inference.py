@@ -24,37 +24,76 @@ def is_numeric(s: str) -> bool:
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
 
-def strip_charges_from_pdbqt(filename: str) -> str:
-    """Strip charges from a pdbqt file.
-    
+def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
+    """Fix the protein structure.
+
     Args:
-        filename (str): The path to the pdbqt file.
+        filename (str): The path to the protein file.
+        obabel_exec (str): The path to the open babel executable.
 
     Returns:
         A string representing the path to the temporary file.
     """
 
-    with open(filename) as f:
-        lines = f.readlines()
+    # PDBBind data (used for training) had only polar hydrogens on the receptor,
+    # with carboxylates deprotonated. Unfortunately, as best I can tell, keeping
+    # only polar hydrogen atoms isn't an option using command line open babel.
+    # So I will convert to PDBQT and then back to PDB.
 
-    # Create a temporary file ending in .pdb
-    new_filename = filename + ".converted.pdb"
-    with open(new_filename, "w") as tmp:
-        for line in lines:
-            if (
-                line.startswith("ATOM")
-                or line.startswith("HETATM")
-                or line.startswith("MODEL")
-                or line == "ENDMDL\n"
-                or line == "END\n"
-            ):
-                if line.startswith("ATOM") or line.startswith("HETATM"):
-                    line = line[:54] + "\n"
-                # print(line)
-                tmp.write(line)
+    # First, convert to PDBQT to get polar hydrogens (pH 7)
+    subprocess.check_output(
+        f"{obabel_exec} {filename} -O {filename}.converted.pdbqt -p 7 -xr", shell=True
+    )
 
-    # Return the path to the temporary file
-    return new_filename
+    # Now convert back to PDB to make sure there are no assigned atomic charges
+    # (important that smina does that).
+    subprocess.check_output(
+        f"{obabel_exec} {filename}.converted.pdbqt -O {filename}.converted.pdb",
+        shell=True,
+    )
+
+    # Clean up intermediate file
+    os.remove(f"{filename}.converted.pdbqt")
+
+    return f"{filename}.converted.pdb"
+
+
+def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
+    """Fix the ligand structure.
+    
+    Args:
+        filename (str): The path to the ligand file.
+        obabel_exec (str): The path to the open babel executable.
+        
+    Returns:
+        A string representing the path to the temporary file.
+    """
+
+    # PDBBind data (used for training) had all hydrogens on the ligands.
+    # Carboxylates, phosphates were protonated, but amines were too (so not just
+    # neutral form). Note that we trained on the SDF files, not the MOL2 files.
+    # MOL2 files had deprotonated carboxylates. Very unfortunate inconsistency.
+    # But we will make the ligands look like the sdf files by protonating at pH
+    # 0. This isn't perfect (sulphonates still not protoanted), but at least
+    # brings the ligands closer to the sdf files used for training.
+
+    # Note also that, strangely, -p doesn't work when converting from a pdbqt
+    # file, even if the target file can included non-polar hydrogens. So I'll
+    # convert to pdb first.
+
+    subprocess.check_output(
+        f"{obabel_exec} {filename} -O {filename}.converted.tmp.pdb -d", shell=True
+    )
+
+    subprocess.check_output(
+        f"{obabel_exec} {filename}.converted.tmp.pdb -O {filename}.converted.pdb -p 0",
+        shell=True,
+    )
+
+    # Clean up intermediate file
+    os.remove(f"{filename}.converted.tmp.pdb")
+
+    return f"{filename}.converted.pdb"
 
 
 def load_example(
@@ -62,6 +101,7 @@ def load_example(
     rec_path: str,
     smina_exec_path: str,
     smina_ordered_terms_names: np.ndarray,
+    obabel_exec_path: str,
 ) -> molgrid.molgrid.ExampleProvider:
     """Load an example from a ligand and receptor path.
     
@@ -72,21 +112,21 @@ def load_example(
             executable.
         smina_ordered_terms_names (np.ndarray): A numpy array of strings 
             representing the names of all the terms.
+        obabel_exec_path (str): A string representing the path to the open babel
+            executable.
             
     Returns:
         A molgrid ExampleProvider.
     """
 
-    # If the ligand is a pdbqt file, strip the charges.
-    if lig_path.endswith(".pdbqt"):
-        lig_path = strip_charges_from_pdbqt(lig_path)
-    if rec_path.endswith(".pdbqt"):
-        rec_path = strip_charges_from_pdbqt(rec_path)
+    # Standardize the molecules to make them more like the training set.
+    lig_path = fix_ligand_structure(lig_path, obabel_exec_path)
+    rec_path = fix_receptor_structure(rec_path, obabel_exec_path)
 
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
     custom_scoring_path = data_file_path("custom_scoring.txt")
-    cmd = f"{smina_exec_path} --custom_scoring {custom_scoring_path} --score_only -r {rec_path} -l {lig_path}"
+    cmd = f"{smina_exec_path} --custom_scoring {custom_scoring_path} --score_only -r {rec_path} -l {lig_path} --seed 42"
     smina_out = str(subprocess.check_output(cmd, shell=True)).split("\\n")
 
     # It's critical to make sure the order is correct (could change with new version of smina).
@@ -212,15 +252,22 @@ def apply(
     gm = molgrid.GridMaker()
     gm.forward(test_batch, input_voxel)
 
-    # print("running model to predict")
+    # print(input_voxel[0,5,4,32])
 
     scaled_smina_terms_masked = smina_terms_masked * smina_norm_factors_masked
+
+    # print(scaled_smina_terms_masked)
 
     # Run that through the model.
     model.to(device)
     predicted_affinity, weights_predict, contributions_predict = model(
         input_voxel, scaled_smina_terms_masked
     )
+
+    # print(weights_predict)
+    # Round below to nearest 0.00001
+    # print(contributions_predict[0,:15].cpu().detach().numpy().round(5))
+        #   ) #.sum(dim=0))
 
     # weighted_terms = coef_predict * scaled_smina_terms_masked
 
@@ -251,13 +298,22 @@ def get_cmd_args() -> argparse.Namespace:
 
     # Required parameters
     parser.add_argument(
-        "--ligpath", required=True, nargs="+", help="path to the ligand(s) (PDB or PDBQT format)"
+        "--ligpath",
+        required=True,
+        nargs="+",
+        help="path to the ligand(s) (PDB or PDBQT format)",
     )
- 
-    parser.add_argument("--recpath", required=True, help="path to the receptor (PDB or PDBQT format)")
+
+    parser.add_argument(
+        "--recpath", required=True, help="path to the receptor (PDB or PDBQT format)"
+    )
 
     parser.add_argument(
         "--smina_exec_path", required=True, help="path to the smina executable"
+    )
+
+    parser.add_argument(
+        "--obabel_exec_path", required=True, help="path to the open babel executable"
     )
 
     # Use store_true
@@ -299,11 +355,15 @@ def get_cmd_args() -> argparse.Namespace:
     # ligpath must end in .pdb or .pdbqt
     for ligpath in args.ligpath:
         if not ligpath.endswith(".pdb") and not ligpath.endswith(".pdbqt"):
-            raise ValueError(f"{ligpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges.")
-        
+            raise ValueError(
+                f"{ligpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges."
+            )
+
     # Same for recpath
     if not args.recpath.endswith(".pdb") and not args.recpath.endswith(".pdbqt"):
-        raise ValueError(f"{args.recpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges.")
+        raise ValueError(
+            f"{args.recpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges."
+        )
 
     return args
 
