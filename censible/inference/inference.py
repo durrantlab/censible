@@ -35,6 +35,10 @@ def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
         A string representing the path to the temporary file.
     """
 
+    if os.path.exists(f"{filename}.converted.pdb"):
+        # For receptor, if converted already exists, don't recreate it.
+        return f"{filename}.converted.pdb"
+
     # PDBBind data (used for training) had only polar hydrogens on the receptor,
     # with carboxylates deprotonated. Unfortunately, as best I can tell, keeping
     # only polar hydrogen atoms isn't an option using command line open babel.
