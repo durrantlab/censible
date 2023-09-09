@@ -73,6 +73,9 @@ def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
         A string representing the path to the temporary file.
     """
 
+    if os.path.exists(f"{filename}.converted.pdb"):
+        return f"{filename}.converted.pdb"
+
     # PDBBind data (used for training) had all hydrogens on the ligands.
     # Carboxylates, phosphates were protonated, but amines were too (so not just
     # neutral form). Note that we trained on the SDF files, not the MOL2 files.
@@ -161,7 +164,8 @@ def load_example(
     example = molgrid.ExampleProvider(
         # data_root can be any directory, I think.
         # data_root="./",
-        default_batch_size=1
+        default_batch_size=1,
+        # add_hydrogens=False,
     )
     example.populate(smina_outfile)
 
@@ -254,7 +258,11 @@ def apply(
     # deterministic. Unlike during training, when you do add random translation
     # and rotation.
     gm = molgrid.GridMaker()
+
+    # gm.set_resolution(0.1)
     gm.forward(test_batch, input_voxel)
+
+    # save_all_channels(input_voxel)
 
     # print(input_voxel[0,5,4,32])
 

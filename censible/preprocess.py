@@ -70,6 +70,12 @@ def preprocess(termtypes: str, data_dir: str):
     #         print(str(t) + "  " + str(termnames[t]) + ": " + str(allterms[1][t]))
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
+    which_precalc_terms_to_keep = remove_problematic_smina_terms(
+        which_precalc_terms_to_keep, term_names
+    )
+
+    print(f"Number of terms retained: {np.sum(which_precalc_terms_to_keep == True)}")
+    print(f"Number of terms removed: {np.sum(which_precalc_terms_to_keep == False)}")
 
     precalc_term_scales = get_precalc_term_scales(
         all_terms, which_precalc_terms_to_keep
@@ -147,10 +153,65 @@ def remove_rare_terms(
         )
         which_precalc_terms_to_keep[idx] = False
 
-    print(f"Number of terms retained: {np.sum(which_precalc_terms_to_keep == True)}")
-    print(f"Number of terms removed: {np.sum(which_precalc_terms_to_keep == False)}")
-
     return which_precalc_terms_to_keep
+
+
+def remove_problematic_smina_terms(
+    which_precalc_terms_to_keep: np.ndarray, term_names: list
+) -> np.ndarray:
+    """Removes problematic smina terms from consideration. Difficult to predict
+    hydrogens, so removing anything related to hydrogen bonds. Similarly,
+    electrostatics are difficult to predict consistently (many different
+    approaches). Finally, also removing ad4_solvation, which seems to depend on
+    hydrogens, and num_tors_sqr* terms, given that num_tors is retained.
+    
+    Args:
+        which_precalc_terms_to_keep (np.ndarray): A boolean array representing
+            which terms to keep.
+        term_names (list): A list of strings representing the names of all the
+            terms.
+    
+    Returns:
+        A boolean array representing which terms to keep.
+    """
+
+    idxs_to_remove = []
+    for i, term_name in enumerate(term_names):
+        term_name = term_name.lower()
+        # print(term_name)
+        if "donor" in term_name:
+            idxs_to_remove.append(i)
+        elif "acceptor" in term_name:
+            idxs_to_remove.append(i)
+        elif "h_bond" in term_name:
+            idxs_to_remove.append(i)
+        elif "electrostatic" in term_name:
+            idxs_to_remove.append(i)
+        elif "ad4_solvation" in term_name:
+            idxs_to_remove.append(i)
+        elif "num_tors_sqr" in term_name:
+            idxs_to_remove.append(i)
+
+    # Print out the ones that will be removed
+    # for idx in idxs_to_remove:
+    # print(term_names[idx])
+
+    # Print out the ones that will be kept
+    # for i, term_name in enumerate(term_names):
+    #     if i not in idxs_to_remove:
+    #         print(term_name)
+
+    # How many trues in which_precalc_terms_to_keep?
+    # print(numpy.sum(which_precalc_terms_to_keep == True))
+
+    for idx in idxs_to_remove:
+        which_precalc_terms_to_keep[idx] = False
+
+    # print(numpy.sum(which_precalc_terms_to_keep == True))
+    return which_precalc_terms_to_keep
+
+    # print(term_name)
+    # print(idxs_to_remove)
 
 
 def get_precalc_term_scales(

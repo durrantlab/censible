@@ -7,13 +7,19 @@ echo
 echo "smina path: " $smina_exec
 echo "obabel path: " $obabel_exec
 
+#rm censible/data/test/1wdn_receptor.pdb.converted.pdb
+
 python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \
                   --out test_out1.tsv 
 
-python predict.py --ligpath censible/data/test/1wdn_ligand.pdbqt \
+read -p "Next> "
+
+#rm censible/data/test/1wdn_receptor.pdb.converted.pdb
+
+python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \

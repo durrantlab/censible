@@ -1,5 +1,6 @@
 import argparse
 from typing import Any, Tuple
+from censible.debug import grid_channel_to_xyz_file
 import molgrid
 import torch
 import torch.optim as optim
@@ -234,6 +235,13 @@ def train_single_fold(
                 random_rotation=True,
             )
 
+            # # TODO: Debug below
+            # gmaker.set_resolution(0.1)
+            # for channel in range(len(input_tensor_for_training[0])):
+            #     xyz = grid_channel_to_xyz_file(input_tensor_for_training[0][channel])
+            #     with open("tmp" + str(channel) + ".xyz", "w") as f:
+            #         f.write(xyz)
+                
             # grid_channel_to_xyz_file(input_tensor[0][0])
             # print(batch_idx)
             # print("")
