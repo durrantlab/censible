@@ -18,3 +18,8 @@ train/*.npy
 train/pdbbind
 .DS_Store
 *.converted.pdb
+
+*.png
+*.xyz
+tmp.*
+tmp

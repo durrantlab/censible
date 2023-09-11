@@ -1,0 +1,11 @@
+{
+    "epochs": 250,
+    "fold_num": 0,
+    "batch_size": 25,
+    "lr": 0.01,
+    "step_size": 80,
+    "prefix": "all",
+    "termtypes": "all",
+    "data_dir": "/mnt/Data/jdurrant/cenet/train",
+    "out_dir": "/mnt/Data/jdurrant/cenet/train/outputs"
+}

@@ -24,83 +24,83 @@ def is_numeric(s: str) -> bool:
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
 
-def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
-    """Fix the protein structure.
+# def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
+#     """Fix the protein structure.
 
-    Args:
-        filename (str): The path to the protein file.
-        obabel_exec (str): The path to the open babel executable.
+#     Args:
+#         filename (str): The path to the protein file.
+#         obabel_exec (str): The path to the open babel executable.
 
-    Returns:
-        A string representing the path to the temporary file.
-    """
+#     Returns:
+#         A string representing the path to the temporary file.
+#     """
 
-    if os.path.exists(f"{filename}.converted.pdb"):
-        # For receptor, if converted already exists, don't recreate it.
-        return f"{filename}.converted.pdb"
+#     if os.path.exists(f"{filename}.converted.pdb"):
+#         # For receptor, if converted already exists, don't recreate it.
+#         return f"{filename}.converted.pdb"
 
-    # PDBBind data (used for training) had only polar hydrogens on the receptor,
-    # with carboxylates deprotonated. Unfortunately, as best I can tell, keeping
-    # only polar hydrogen atoms isn't an option using command line open babel.
-    # So I will convert to PDBQT and then back to PDB.
+#     # PDBBind data (used for training) had only polar hydrogens on the receptor,
+#     # with carboxylates deprotonated. Unfortunately, as best I can tell, keeping
+#     # only polar hydrogen atoms isn't an option using command line open babel.
+#     # So I will convert to PDBQT and then back to PDB.
 
-    # First, convert to PDBQT to get polar hydrogens (pH 7)
-    subprocess.check_output(
-        f"{obabel_exec} {filename} -O {filename}.converted.pdbqt -p 7 -xr", shell=True
-    )
+#     # First, convert to PDBQT to get polar hydrogens (pH 7)
+#     subprocess.check_output(
+#         f"{obabel_exec} {filename} -O {filename}.converted.pdbqt -p 7 -xr", shell=True
+#     )
 
-    # Now convert back to PDB to make sure there are no assigned atomic charges
-    # (important that smina does that).
-    subprocess.check_output(
-        f"{obabel_exec} {filename}.converted.pdbqt -O {filename}.converted.pdb",
-        shell=True,
-    )
+#     # Now convert back to PDB to make sure there are no assigned atomic charges
+#     # (important that smina does that).
+#     subprocess.check_output(
+#         f"{obabel_exec} {filename}.converted.pdbqt -O {filename}.converted.pdb",
+#         shell=True,
+#     )
 
-    # Clean up intermediate file
-    os.remove(f"{filename}.converted.pdbqt")
+#     # Clean up intermediate file
+#     os.remove(f"{filename}.converted.pdbqt")
 
-    return f"{filename}.converted.pdb"
+#     return f"{filename}.converted.pdb"
 
 
-def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
-    """Fix the ligand structure.
+# def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
+#     """Fix the ligand structure.
     
-    Args:
-        filename (str): The path to the ligand file.
-        obabel_exec (str): The path to the open babel executable.
+#     Args:
+#         filename (str): The path to the ligand file.
+#         obabel_exec (str): The path to the open babel executable.
         
-    Returns:
-        A string representing the path to the temporary file.
-    """
+#     Returns:
+#         A string representing the path to the temporary file.
+#     """
 
-    if os.path.exists(f"{filename}.converted.pdb"):
-        return f"{filename}.converted.pdb"
+#     if os.path.exists(f"{filename}.converted.pdb"):
+#         return f"{filename}.converted.pdb"
 
-    # PDBBind data (used for training) had all hydrogens on the ligands.
-    # Carboxylates, phosphates were protonated, but amines were too (so not just
-    # neutral form). Note that we trained on the SDF files, not the MOL2 files.
-    # MOL2 files had deprotonated carboxylates. Very unfortunate inconsistency.
-    # But we will make the ligands look like the sdf files by protonating at pH
-    # 0. This isn't perfect (sulphonates still not protoanted), but at least
-    # brings the ligands closer to the sdf files used for training.
+#     # PDBBind data (used for training) had all hydrogens on the ligands.
+#     # Carboxylates, phosphates were protonated, but amines were too (so not just
+#     # neutral form). Note that we trained on the SDF files, not the MOL2 files.
+#     # MOL2 files had deprotonated carboxylates. Very unfortunate inconsistency.
+#     # But we will make the ligands look like the sdf files by protonating at pH
+#     # 0. This isn't perfect (sulphonates still not protoanted), but at least
+#     # brings the ligands closer to the sdf files used for training.
 
-    # Note also that, strangely, -p doesn't work when converting from a pdbqt
-    # file, even if the target file can included non-polar hydrogens. So I'll
-    # convert to pdb first.
+#     # Note also that, strangely, -p doesn't work when converting from a pdbqt
+#     # file, even if the target file can included non-polar hydrogens. So I'll
+#     # convert to pdb first.
 
-    subprocess.check_output(
-        f"{obabel_exec} {filename} -O {filename}.converted.tmp.pdb -d", shell=True
-    )
+#     subprocess.check_output(
+#         f"{obabel_exec} {filename} -O {filename}.converted.tmp.pdb -d", shell=True
+#     )
 
-    subprocess.check_output(
-        f"{obabel_exec} {filename}.converted.tmp.pdb -O {filename}.converted.pdb -p 0",
-        shell=True,
-    )
+#     subprocess.check_output(
+#         f"{obabel_exec} {filename}.converted.tmp.pdb -O {filename}.converted.pdb -p 0",
+#         shell=True,
+#     )
 
-    # Clean up intermediate file
-    os.remove(f"{filename}.converted.tmp.pdb")
+#     # Clean up intermediate file
+#     os.remove(f"{filename}.converted.tmp.pdb")
 
-    return f"{filename}.converted.pdb"
+#     return f"{filename}.converted.pdb"
 
 
 def load_example(
@@ -127,8 +127,8 @@ def load_example(
     """
 
     # Standardize the molecules to make them more like the training set.
-    lig_path = fix_ligand_structure(lig_path, obabel_exec_path)
-    rec_path = fix_receptor_structure(rec_path, obabel_exec_path)
+    # lig_path = fix_ligand_structure(lig_path, obabel_exec_path)
+    # rec_path = fix_receptor_structure(rec_path, obabel_exec_path)
 
     # get CEN terms for proper termset
     # this is my smina path i neglected to append it
@@ -362,7 +362,7 @@ def get_cmd_args() -> argparse.Namespace:
 
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
-        args.model_dir = data_file_path(f"model_allcen{os.sep}")
+        args.model_dir = data_file_path(f"model_allcen2{os.sep}")
 
     # ligpath must end in .pdb or .pdbqt
     for ligpath in args.ligpath:

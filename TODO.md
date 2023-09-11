@@ -1,8 +1,11 @@
 Colab? Update link in README.md.
 
-Be sure to remove existing charges.
+fix_ligand_structure, etc., can be much simplified now. Might need to still add
+hydrogens for typing, but details not so important.
 
 # DONE
+
+Be sure to remove existing charges.
 
 Mention output is pK(affinity) somewhere. Output in terms of mM?
 
