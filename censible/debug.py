@@ -10,7 +10,6 @@ gridOrder += [
     l + "_LIGAND" for l in list(molgrid.defaultGninaLigandTyper.get_type_names())
 ]
 
-
 def grid_channel_to_xyz_file(grid_channel) -> str:
     """Converts a grid channel to a .xyz file for visualization in VMD.
     

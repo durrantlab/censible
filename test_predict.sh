@@ -19,7 +19,7 @@ read -p "Next> "
 
 #rm censible/data/test/1wdn_receptor.pdb.converted.pdb
 
-python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
+python predict.py --ligpath censible/data/test/1wdn_ligand.pdbqt \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \
