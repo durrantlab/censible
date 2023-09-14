@@ -3,10 +3,10 @@ import os
 import molgrid
 
 # The order of the grids:
-gridOrder = [
+grid_order = [
     l + "_RECEPTOR" for l in list(molgrid.defaultGninaReceptorTyper.get_type_names())
 ]
-gridOrder += [
+grid_order += [
     l + "_LIGAND" for l in list(molgrid.defaultGninaLigandTyper.get_type_names())
 ]
 
@@ -39,7 +39,7 @@ def grid_channel_to_xyz_file(grid_channel) -> str:
 def save_all_channels(input_batch_voxel):
     # TODO: Debug below
     for channel in range(len(input_batch_voxel[0])):
-        name = gridOrder[channel]
+        name = grid_order[channel]
         filename = name + ".tmp" + str(channel) + ".xyz"
         if os.path.exists(filename):
             os.remove(filename)

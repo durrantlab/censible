@@ -22,7 +22,6 @@ for lig_path in args.ligpath:
         args.recpath,
         args.smina_exec_path,
         smina_ordered_terms_names,
-        args.obabel_exec_path,
     )
 
     (

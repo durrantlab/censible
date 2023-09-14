@@ -175,13 +175,10 @@ def apply(
     # gm.set_resolution(0.1)
     gm.forward(test_batch, input_voxel)
 
+    # For debuging
     # save_all_channels(input_voxel)
 
-    # print(input_voxel[0,5,4,32])
-
     scaled_smina_terms_masked = smina_terms_masked * smina_norm_factors_masked
-
-    # print(scaled_smina_terms_masked)
 
     # Run that through the model.
     model.to(device)
