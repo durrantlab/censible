@@ -79,5 +79,7 @@ for pdbid in pdbids_to_remove:
 with open("all.types", "w") as f:
     for pdbid in affinity_dict:
         f.write(
-            f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.gninatypes {paths[pdbid]}/{pdbid}_ligand.gninatypes\n"
+            f"1 {affinity_dict[pdbid]} {paths[pdbid]}/{pdbid}_protein.pdb.nowat.ph7.gninatypes {paths[pdbid]}/{pdbid}_ligand.mol2.ph7.gninatypes\n"
         )
+
+print("Created all.types")

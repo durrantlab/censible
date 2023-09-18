@@ -9,8 +9,8 @@ from tqdm import tqdm  # Import tqdm
 
 def process_line(line):
     (label, affinity, rec, lig) = line.split()
-    r = rec.replace("_protein.gninatypes", "_protein.pdb")
-    l = lig.replace("_ligand.gninatypes", "_ligand.sdf")
+    r = rec.replace("_protein.pdb.nowat.ph7.gninatypes", "_protein.pdb.nowat.ph7.pdb")
+    l = lig.replace("_ligand.mol2.ph7.gninatypes", "_ligand.mol2.ph7.mol2")
 
     try:
         smina_exec = "smina/smina.static"
@@ -38,9 +38,11 @@ def make_all_types(out_flnm):
     # Filter out None values from the results list
     results = [result for result in results if result is not None]
 
-    with open(out_flnm.replace(".types", "_cen.types"), "w") as f:
+    new_out_filename = out_flnm.replace(".types", "_cen.types")
+    with open(new_out_filename, "w") as f:
         for result in results:
             f.write(result)
+    print(f"Created file {new_out_filename}")
 
 
 def main():

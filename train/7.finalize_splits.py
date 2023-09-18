@@ -7,12 +7,12 @@ import random
 with open("all_cen.types") as f:
     all_cen_lines = f.readlines()
     types_lines = {
-        os.path.basename(line.split()[-1].replace("_ligand.gninatypes", "")): line
+        os.path.basename(line.split()[-1].replace("_ligand.mol2.ph7.gninatypes", "")): line
         for line in all_cen_lines
     }
 
 
-def make_types_file(train_types_lines, test_types_lines, idx, prefix="crystal"):
+def make_types_file(train_types_lines, test_types_lines, idx, prefix="randomsplit"):
     train_filename = f"{prefix}train{idx}_cen.types"
     test_filename = f"{prefix}test{idx}_cen.types"
 
