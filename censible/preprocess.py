@@ -70,9 +70,9 @@ def preprocess(termtypes: str, data_dir: str):
     #         print(str(t) + "  " + str(termnames[t]) + ": " + str(allterms[1][t]))
 
     which_precalc_terms_to_keep = remove_rare_terms(all_terms, termtypes, term_names)
-    which_precalc_terms_to_keep = remove_problematic_smina_terms(
-        which_precalc_terms_to_keep, term_names
-    )
+    # which_precalc_terms_to_keep = remove_problematic_smina_terms(
+    #     which_precalc_terms_to_keep, term_names
+    # )
 
     print(f"Number of terms retained: {np.sum(which_precalc_terms_to_keep == True)}")
     print(f"Number of terms removed: {np.sum(which_precalc_terms_to_keep == False)}")
