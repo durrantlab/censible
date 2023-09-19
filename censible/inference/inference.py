@@ -24,11 +24,88 @@ def is_numeric(s: str) -> bool:
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
 
+def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
+    """Fix the protein structure to make it more like the training set. 
+        1. Remove all waters. 
+        2. Delete all hydrogens. 
+        3. Protonate at pH7. 
+    Note that PDB files do not include charges, so these will be recalculated.
+
+    Args:
+        filename (str): The path to the protein file.
+        obabel_exec (str): The path to the open babel executable.
+
+    Returns:
+        A string representing the path to the temporary file.
+    """
+
+    if os.path.exists(f"{filename}.censible.converted.pdb"):
+        # For receptor, if converted already exists, don't recreate it.
+        print(f"WARNING: using existing converted receptor file: {filename}.censible.converted.pdb")
+        return f"{filename}.censible.converted.pdb"
+
+    # First, remove all waters
+    with open(filename) as f:
+        pdb_lines = f.readlines()
+    pdb_lines = [
+        l for l in pdb_lines if not "HOH" in l and not "WAT" in l and not "TIP3" in l
+    ]
+    with open(f"{filename}.no_waters.tmp.pdb", "w") as f:
+        f.writelines(pdb_lines)
+
+    # Second remove existing hydrogen atoms
+    subprocess.check_output(
+        f"{obabel_exec} {filename}.no_waters.tmp.pdb -O {filename}.no_waters.noh.tmp.pdb -d",
+        shell=True,
+    )
+
+    # Third, protonate at pH7
+    subprocess.check_output(
+        f"{obabel_exec} {filename}.no_waters.noh.tmp.pdb -O {filename}.censible.converted.pdb -p 7",
+        shell=True,
+    )
+
+    # Clean up intermediate files
+    os.remove(f"{filename}.no_waters.tmp.pdb")
+    os.remove(f"{filename}.no_waters.noh.tmp.pdb")
+
+    return f"{filename}.censible.converted.pdb"
+
+
+def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
+    """Fix the ligand structure so it is more like those of the training data.
+    Note that -p 7 reassign partial charges, so old ones are not retained.
+
+    1. Remove existing hydrogens.
+    2. Protonate at pH7.
+    
+    Args:
+        filename (str): The path to the ligand file.
+        obabel_exec (str): The path to the open babel executable.
+        
+    Returns:
+        A string representing the path to the temporary file.
+    """
+
+    cmd = f"{obabel_exec} {filename} -O {filename}.noh.tmp.mol2 -d"
+    subprocess.check_output(cmd, shell=True)
+
+    # Adding gasteiger just in case default changes. Note: I have confirmed that
+    # "-p 7 --partialcharge gasteiger" gives the same as "-p 7" in a test
+    # ligand. In case you ever need to know, you used obabel 3.1.0 to prepare
+    # ligands for training.
+    cmd = f"{obabel_exec} {filename}.noh.tmp.mol2 -O {filename}.censible.converted.mol2 -p 7 --partialcharge gasteiger"
+    subprocess.check_output(cmd, shell=True)
+
+    return f"{filename}.censible.converted.mol2"
+
+
 def load_example(
     lig_path: str,
     rec_path: str,
     smina_exec_path: str,
     smina_ordered_terms_names: np.ndarray,
+    obabel_exec_path: str,
 ) -> molgrid.molgrid.ExampleProvider:
     """Load an example from a ligand and receptor path.
     
@@ -39,10 +116,16 @@ def load_example(
             executable.
         smina_ordered_terms_names (np.ndarray): A numpy array of strings 
             representing the names of all the terms.
+        obabel_exec_path (str): A string representing the path to the open babel
+            executable.
             
     Returns:
         A molgrid ExampleProvider.
     """
+
+    # Standardize the molecules to make them more like the training set.
+    lig_path = fix_ligand_structure(lig_path, obabel_exec_path)
+    rec_path = fix_receptor_structure(rec_path, obabel_exec_path)
 
     # get CEN terms for proper termset
     custom_scoring_path = data_file_path("custom_scoring.txt")
@@ -234,6 +317,12 @@ def get_cmd_args() -> argparse.Namespace:
         "--smina_exec_path", required=True, help="path to the smina executable"
     )
 
+    parser.add_argument(
+        "--obabel_exec_path",
+        required=True,
+        help="path to the open babel (obabel) executable",
+    )
+
     # Use store_true
     parser.add_argument(
         "--use_cpu",
@@ -265,6 +354,10 @@ def get_cmd_args() -> argparse.Namespace:
     # Check if smina_exec_path exists
     if not os.path.exists(args.smina_exec_path):
         raise FileNotFoundError(f"{args.smina_exec_path} does not exist")
+
+    # Check if obabel_exec_path exists
+    if not os.path.exists(args.obabel_exec_path):
+        raise FileNotFoundError(f"{args.obabel_exec_path} does not exist")
 
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
