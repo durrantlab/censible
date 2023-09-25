@@ -41,7 +41,7 @@ def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
 
     if os.path.exists(f"{filename}.censible.converted.pdb"):
         # For receptor, if converted already exists, don't recreate it.
-        print(f"WARNING: using existing converted receptor file: {filename}.censible.converted.pdb")
+        print(f"\nWARNING: using existing converted receptor file:\n{filename}.censible.converted.pdb\nDelete this file if you want to recreate it.", end="")
         return f"{filename}.censible.converted.pdb"
 
     # First, remove all waters

@@ -61,8 +61,9 @@ You can also install _smina_ using Anaconda:
 conda install -c conda-forge smina
 ```
 
-We used the Oct 15 2019 version of _smina_ (based onAutoDock Vina 1.1.2) for
-testing and training.
+We used the Oct 15 2019 version of _smina_ (based onAutoDock Vina 1.1.2) to
+calculate terms for testing and training, though we expect other versions will
+work equally well.
 
 ### 5. Install _Open Babel_
 
@@ -101,12 +102,14 @@ Here is a simple example of how to use CENsible for inference (prediction):
 ```bash
 python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --recpath censible/data/test/1wdn_receptor.pdb \
-                  --smina_exec_path /usr/local/bin/smina
+                  --smina_exec_path /usr/local/bin/smina \
+                  --obabel_exec_path /usr/local/bin/obabel
 ```
 
 **NOTE:** You should replace the `--ligpath` and `--recpath` arguments with the
 path to your ligand and receptor files, respectively. You should also replace
-the `--smina_exec_path` argument with the path to your smina executable.
+the `--smina_exec_path` and `--obabel_exec_path` arguments with the paths to
+your smina and obabel executables, respectively.
 
 ### Saving CENsible Weights
 
@@ -118,19 +121,21 @@ information used to calculate the final score), use the `--out` flag:
 python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path /usr/local/bin/smina \
+                  --obabel_exec_path /usr/local/bin/obabel \
                   --out test_out.tsv
 ```
 
 ### Using Other CENsible Models
 
 CENsible comes with a pre-trained model (described in the accompanying
-manuscript, see `censible/data/model_allcen/`). If you wish to use your own
+manuscript, see `censible/data/model_allcen3/`). If you wish to use your own
 model, specify the path to the model directory using the `--model_dir` flag:
 
 ```bash
 python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path /usr/local/bin/smina \
+                  --obabel_exec_path /usr/local/bin/obabel \
                   --model_dir ./my_model_dir/ \
                   --out test_out.tsv
 ```

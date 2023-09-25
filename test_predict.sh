@@ -1,4 +1,4 @@
-# Assuming smina is in the UNIX path
+# Assuming smina and obabel are in the UNIX path
 
 export smina_exec=`which smina`
 export obabel_exec=`which obabel`
@@ -14,25 +14,34 @@ rm -f censible/data/test/1wdn_receptor.pdb.converted.pdb
 for f in censible/data/test/1wdn_ligand.*
 do
     python predict.py --ligpath $f \
-                    --recpath censible/data/test/1wdn_receptor.pdb \
-                    --smina_exec_path $smina_exec \
-                    --obabel_exec_path $obabel_exec
+                      --recpath censible/data/test/1wdn_receptor.pdb \
+                      --smina_exec_path $smina_exec \
+                      --obabel_exec_path $obabel_exec
 
-    read -p "Next> "
+    # Clean up
+    rm -f censible/data/test/1wdn_ligand.*converted.*
+
+    # read -p "Next> "
 done
 
+# Also test multiple ligands
+python predict.py --ligpath censible/data/test/1wdn_ligand.pdbqt censible/data/test/1wdn_ligand.pdb \
+                  --recpath censible/data/test/1wdn_receptor.pdb \
+                  --smina_exec_path $smina_exec \
+                  --obabel_exec_path $obabel_exec
+
+# Clean up
+rm -f censible/data/test/1wdn_ligand.*converted.*
+
+# Test --use_cpu flag to avoid cuda. Also test --out flag.
 python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \
-                  --out test_out1.tsv 
+                  --out test_out.tsv \
+                  --use_cpu
 
-read -p "Next> "
-
-python predict.py --ligpath censible/data/test/1wdn_ligand.pdbqt \
-                  --recpath censible/data/test/1wdn_receptor.pdb \
-                  --smina_exec_path $smina_exec \
-                  --obabel_exec_path $obabel_exec \
-                  --out test_out2.tsv
+# Clean up
+rm -f censible/data/test/1wdn_ligand.*converted.*
 
 # Append `--use_cpu` to the above commands to use CPU instead of CUDA GPU
