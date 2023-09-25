@@ -17,12 +17,10 @@ python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
 
 read -p "Next> "
 
-#rm censible/data/test/1wdn_receptor.pdb.converted.pdb
-
 python predict.py --ligpath censible/data/test/1wdn_ligand.pdbqt \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \
                   --out test_out2.tsv
 
-# Append `--use_cpu` to the above command to use CPU instead of CUDA GPU
+# Append `--use_cpu` to the above commands to use CPU instead of CUDA GPU
