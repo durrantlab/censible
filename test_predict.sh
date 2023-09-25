@@ -7,7 +7,19 @@ echo
 echo "smina path: " $smina_exec
 echo "obabel path: " $obabel_exec
 
-#rm censible/data/test/1wdn_receptor.pdb.converted.pdb
+# Remove the converted receptor file if it exists (to regenerate it).
+rm -f censible/data/test/1wdn_receptor.pdb.converted.pdb
+
+# Iterate through these files: censible/data/test/1wdn_ligand.*
+for f in censible/data/test/1wdn_ligand.*
+do
+    python predict.py --ligpath $f \
+                    --recpath censible/data/test/1wdn_receptor.pdb \
+                    --smina_exec_path $smina_exec \
+                    --obabel_exec_path $obabel_exec
+
+    read -p "Next> "
+done
 
 python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
                   --recpath censible/data/test/1wdn_receptor.pdb \

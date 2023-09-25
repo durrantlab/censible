@@ -47,21 +47,40 @@ pip install -r requirements_predict.txt
 
 **NOTE:** If you don't have CUDA installed on your system, you may need to edit
 the `requirements_predict.txt` file to install the CPU version of PyTorch. If
-so, run the script using the `--use_cpu` flag (see below).
+so, run the censible script using the `--use_cpu` flag (see below).
 
 ### 4. Install _smina_
 
 CENsible uses _smina_ to calculate the pre-calculated terms. Visit the [smina
-repository](https://sourceforge.net/projects/smina/) to download the latest
+website](https://sourceforge.net/projects/smina/) to download the latest
 version.
 
-As of August 10, 2023, you can install _smina_ using Anaconda:
+You can also install _smina_ using Anaconda:
 
 ```bash
 conda install -c conda-forge smina
 ```
 
-### 5. Test the CENsible Installation
+We used the Oct 15 2019 version of _smina_ (based onAutoDock Vina 1.1.2) for
+testing and training.
+
+### 5. Install _Open Babel_
+
+CENsible uses _Open Babel_ to standardize the user-provided protein and
+small-molecule files. Visit the [Open Babel website](https://openbabel.org/) to
+download the latest version.
+
+You can also install _Open Babel_ using Anaconda:
+
+```bash
+conda install -c conda-forge openbabel
+```
+
+We used Open Babel 3.0.0 (Mar 11 2020) for training and testing. We rescored the
+virtual screens described in our manuscript using Babel 3.1.0 (Oct 28 2022),
+which also worked well.
+
+### 6. Test the CENsible Installation
 
 To test the installation, run the following command:
 
@@ -69,9 +88,9 @@ To test the installation, run the following command:
 ./test_predict.sh
 ```
 
-**NOTE:** This script assumes _smina_ is in your PATH. Additionally, if you have
-installed a version of Pytorch that does not support CUDA, you must edit the
-`test_predict.sh` file to add the `--use_cpu` flag.
+**NOTE:** This script assumes _smina_ and _obaebl_ are in your PATH.
+Additionally, if you have installed a version of Pytorch that does not support
+CUDA, you must edit the `test_predict.sh` file to add the `--use_cpu` flag.
 
 ## Usage
 
