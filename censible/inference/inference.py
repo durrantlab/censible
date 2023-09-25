@@ -97,6 +97,9 @@ def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
     cmd = f"{obabel_exec} {filename}.noh.tmp.mol2 -O {filename}.censible.converted.mol2 -p 7 --partialcharge gasteiger"
     subprocess.check_output(cmd, shell=True)
 
+    # Clean up
+    os.remove(f"{filename}.noh.tmp.mol2")
+
     return f"{filename}.censible.converted.mol2"
 
 
