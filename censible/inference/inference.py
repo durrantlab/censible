@@ -364,7 +364,7 @@ def get_cmd_args() -> argparse.Namespace:
 
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
-        args.model_dir = data_file_path(f"model_allcen2{os.sep}")
+        args.model_dir = data_file_path(f"model_allcen3{os.sep}")
 
     # ligpath must end in .pdb or .pdbqt
     # for ligpath in args.ligpath:
