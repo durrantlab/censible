@@ -366,18 +366,5 @@ def get_cmd_args() -> argparse.Namespace:
     if args.model_dir is None:
         args.model_dir = data_file_path(f"model_allcen3{os.sep}")
 
-    # ligpath must end in .pdb or .pdbqt
-    # for ligpath in args.ligpath:
-    #     if not ligpath.endswith(".pdb") and not ligpath.endswith(".pdbqt"):
-    #         raise ValueError(
-    #             f"{ligpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges."
-    #         )
-
-    # # Same for recpath
-    # if not args.recpath.endswith(".pdb") and not args.recpath.endswith(".pdbqt"):
-    #     raise ValueError(
-    #         f"{args.recpath} must end in .pdb or .pdbqt. Otherwise, can't guarantee partial charges haven't been precalculated. It is critical that smina be allowed to calculate partial charges."
-    #     )
-
     return args
 
