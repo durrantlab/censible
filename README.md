@@ -157,10 +157,10 @@ affinity. For example:
 CENsible 1.0
 
 receptor: censible/data/test/1wdn_receptor.pdb
-ligand:   censible/data/test/1wdn_ligand.mol2
-model:    /mnt/Data/jdurrant/cenet/censible/data/model_allcen/
+ligand:   censible/data/test/1wdn_ligand.pdb
+model:    /mnt/Data/jdurrant/cenet/censible/data/model_allcen3/
 
-score:    5.81088 (1.55 µM)
+score:    6.11017 (775.94 nM)
 
 WARNING: No output file specified (--out). Not saving weights and contributions.
 
