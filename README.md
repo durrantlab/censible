@@ -2,17 +2,18 @@
 
 ## Introduction
 
-CENsible uses context explanation networks (CENs) to predict small-molecule
-binding affinities. Rather than predict a binding affinity directly, it predicts
-the contributions of pre-calculated terms to the overall affinity, thus
-providing interpretable output. CENsible insights are useful for subsequent lead
-optimization.
+CENsible uses deep-learning context explanation networks (CENs) to predict
+small-molecule binding affinities. Rather than predict a binding affinity
+directly, it predicts the contributions of pre-calculated terms to the overall
+affinity, thus providing interpretable output. CENsible insights are useful for
+subsequent lead optimization.
 
 We release CENsible under the terms of the [GNU General Public License
 v3.0](https://github.com/durrantlab/censible/blob/main/LICENSE.md). The git
 repository is available at
 [https://github.com/durrantlab/censible](https://github.com/durrantlab/censible).
-A working Google Colab demo is available at **URL HERE**.
+A [Google Colab is also
+available](https://durrantlab.pitt.edu/apps/censible/web/) for easy testing.
 
 These instructions describe how to use CENsible for inference (prediction). If
 you wish to train your own CENsible model, see `train/README.md` for some tips.
@@ -68,8 +69,9 @@ work equally well.
 ### 5. Install _Open Babel_
 
 CENsible uses _Open Babel_ to standardize the user-provided protein and
-small-molecule files. Visit the [Open Babel website](https://openbabel.org/) to
-download the latest version.
+small-molecule files. Visit the [Open Babel
+repository](https://github.com/openbabel/openbabel) to download the latest
+version.
 
 You can also install _Open Babel_ using Anaconda:
 
