@@ -1,3 +1,10 @@
+"""
+This module provides utilities for inferencing using the 'censible' package.
+
+It primarily functions to process ligand data, apply the model, and generate
+output in TSV (Tab-Separated Values) format.
+"""
+
 from censible.inference.inference import get_cmd_args, load_example, load_model, apply
 from censible.inference.tsv_out_writer import TSVWriter
 

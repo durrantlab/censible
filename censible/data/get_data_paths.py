@@ -1,3 +1,5 @@
+"""This module provides utility functions for accessing data files."""
+
 import os
 
 # Get the directory where this script is located
@@ -12,5 +14,4 @@ def data_file_path(filename: str) -> str:
     Returns:
         The path to the file in the data directory.
     """
-
     return script_dir + os.sep + filename

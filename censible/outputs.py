@@ -1,3 +1,10 @@
+"""
+Utilities to visualize/save model outputs (e.g., contributions, term weights).
+
+The module use the Seaborn library and integrates with the PyTorch framework for
+saving the trained model states.
+"""
+
 from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +23,7 @@ def _weights_heatmap(
     save_dir: str,
     gninatypes_filenames: list[tuple[str, str]],
 ):
-    """Saves a heatmap of the weights.
+    """Save a heatmap of the weights.
     
     Args:
         coefs_predict_lst (list[np.ndarray]): A list of numpy arrays, where
@@ -31,7 +38,6 @@ def _weights_heatmap(
             each 2-tuple represents the gninatypes filenames for a protein and
             ligand, respectively.
     """
-
     # Save all weights
     header = ["protein_gnina_types", "ligand_gnina_types"] + [
         h.replace(",", "_") for h in term_names[which_precalc_terms_to_keep]
@@ -71,7 +77,7 @@ def _weights_heatmap(
 
 
 def _save_to_csv(f: Any, header: list[str], vals: list[list[Any]]):
-    """Save ccweights to csv file, using the values in header as the column names
+    """Save ccweights to csv file, using header values as column names.
     
     Args:
         f (Any): A file-like object.
@@ -80,7 +86,6 @@ def _save_to_csv(f: Any, header: list[str], vals: list[list[Any]]):
         vals (list[list[Any]]): A list of lists with the values (rows). Can be
             combination of strings and numbers.
     """
-
     writer = csv.writer(f)
     writer.writerow(header)
     writer.writerows(vals)
@@ -93,7 +98,7 @@ def _contributions_heatmap(
     save_dir: str,
     gninatypes_filenames: list[tuple[str, str]],
 ):
-    """Saves a heatmap of the contributions.
+    """Save a heatmap of the contributions.
     
     Args:
         contributions_lst (list[np.ndarray]): A list of numpy arrays, where
@@ -108,7 +113,6 @@ def _contributions_heatmap(
             each 2-tuple represents the gninatypes filenames for a protein and
             ligand, respectively.
     """
-
     # save all contributions
     header = ["protein_gnina_types", "ligand_gnina_types"] + [
         h.replace(",", "_") for h in term_names[which_precalc_terms_to_keep]
@@ -142,7 +146,7 @@ def _contributions_heatmap(
 
 
 def _get_output_dir(params: dict) -> str:
-    """Gets the output directory for the model.
+    """Get the output directory for the model.
     
     Args:
         params (dict): A dictionary of parameters.
@@ -150,7 +154,6 @@ def _get_output_dir(params: dict) -> str:
     Returns:
         str: A string representing the output directory for the model.
     """
-
     # Get the output directory, using default if necessary
     outdir = params.get("out_dir", "./outputs/")
 
@@ -187,7 +190,7 @@ def _save_model(
     outdir: str,
     report_subdir: str,
 ):
-    """Saves the model and associated files.
+    """Save the model and associated files.
     
     Args:
         model (CENet): The model to save.
@@ -204,7 +207,6 @@ def _save_model(
         report_subdir (str): A string representing the output directory for the
             report.
     """
-
     # Save the model
     torch.save(model.state_dict(), f"{outdir}model.pt")
 
@@ -252,7 +254,7 @@ def save_outputs(
     term_names: np.ndarray,
     params: dict,
 ):
-    """Generates outputs for the model.
+    """Generate outputs for the model.
     
     Args:
         model (CENet): A CENet model to save.
@@ -280,7 +282,6 @@ def save_outputs(
             represents the name of a term in the precalculated terms.
         params (dict): A Params object.
     """
-
     outdir = _get_output_dir(params)
     report_subdir = f"{outdir}report/"
 

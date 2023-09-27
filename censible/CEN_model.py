@@ -1,9 +1,15 @@
+"""
+This module defines the neural network architecture.
+
+The network is a convolutional architecture tailored for molecular data, which,
+in its forward pass, computes both predicted affinities and the coefficients for
+precalculated molecular terms.
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from censible.view import View
-
-# from _debug import grid_channel_to_xyz_file
 
 # Compare to published performance for this model, 1.5 RMSE and 0.7 Pearson's R,
 # when predicting affinity alone.
@@ -20,7 +26,6 @@ class CENet(nn.Module):
                 input.
             numterms (int): The number of terms to use. Can also be None.
         """
-
         super(CENet, self).__init__()
         self.modules = []
         nchannels = dims[0]
@@ -74,9 +79,6 @@ class CENet(nn.Module):
             A tuple of torch tensors representing the predicted affinity, the
             predicted coefficients, and the weighted terms.
         """
-
-        # should approximate the affinity of the receptor/ligand pair
-
         for layer in self.modules:
             batch = layer(batch)
             if isinstance(layer, nn.Conv3d):
@@ -85,7 +87,6 @@ class CENet(nn.Module):
         coef_predict = self.fc(batch)
         batch_size, num_terms = coef_predict.shape
 
-        # import pdb; pdb.set_trace()
         # Here also predict term * weight for each term. For another graph, that
         # isn't scaled.
         # coef_predict = coef_predict.view(batch_size, num_terms, -1)

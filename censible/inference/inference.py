@@ -1,3 +1,14 @@
+"""
+Functions for molecular data processing/analysis using `molgrid` and `torch`.
+
+It offers functionalities to standardize molecular structures of both receptors
+and ligands, ensuring their compatibility with trained models. The module
+further supports the loading and application of machine learning models on
+molecular data, making predictions based on the provided examples. Special
+attention is given to ensuring proper ordering and masking of molecular terms
+during processing.
+"""
+
 import argparse
 import re
 from censible.data.get_data_paths import data_file_path
@@ -20,12 +31,13 @@ def is_numeric(s: str) -> bool:
     Returns:
         A boolean representing if the string s is a numeric string.
     """
-
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$", s))
 
 
 def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
-    """Fix the protein structure to make it more like the training set. 
+    """Fix the protein structure to make it more like the training set.
+
+    Note:
         1. Remove all waters. 
         2. Delete all hydrogens. 
         3. Protonate at pH7. 
@@ -38,7 +50,6 @@ def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
     Returns:
         A string representing the path to the temporary file.
     """
-
     if os.path.exists(f"{filename}.censible.converted.pdb"):
         # For receptor, if converted already exists, don't recreate it.
         print(f"\nWARNING: using existing converted receptor file:\n{filename}.censible.converted.pdb\nDelete this file if you want to recreate it.", end="")
@@ -74,7 +85,6 @@ def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
 
 def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
     """Fix the ligand structure so it is more like those of the training data.
-    Note that -p 7 reassign partial charges, so old ones are not retained.
 
     1. Remove existing hydrogens.
     2. Protonate at pH7.
@@ -85,8 +95,9 @@ def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
         
     Returns:
         A string representing the path to the temporary file.
-    """
 
+    Note: -p 7 reassign partial charges, so old ones are not retained.
+    """
     cmd = f"{obabel_exec} {filename} -O {filename}.noh.tmp.mol2 -d"
     subprocess.check_output(cmd, shell=True)
 
@@ -125,7 +136,6 @@ def load_example(
     Returns:
         A molgrid ExampleProvider.
     """
-
     # Standardize the molecules to make them more like the training set.
     lig_path = fix_ligand_structure(lig_path, obabel_exec_path)
     rec_path = fix_receptor_structure(rec_path, obabel_exec_path)
@@ -185,7 +195,6 @@ def load_model(model_dir: str):
         A tuple containing the model and other important data for applying the
         model to an example.
     """
-
     model_path = model_dir + os.sep + "model.pt"
     smina_terms_mask_path = model_dir + os.sep + "which_precalc_terms_to_keep.npy"
     smina_term_scales_path = model_dir + os.sep + "precalc_term_scales.npy"
@@ -229,7 +238,6 @@ def apply(
     Returns:
         A tuple containing the predicted affinity, weights, contributions, etc.
     """
-
     smina_norm_factors_masked = torch.from_numpy(smina_norm_factors_masked).to(device)
 
     smina_terms_mask_trch = torch.from_numpy(smina_terms_mask).to(device)
@@ -300,7 +308,6 @@ def get_cmd_args() -> argparse.Namespace:
     Returns:
         argparse.Namespace: command line arguments
     """
-
     # Create argparser
     parser = argparse.ArgumentParser()
 

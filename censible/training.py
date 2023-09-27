@@ -1,3 +1,12 @@
+"""
+This module provides utilities for training and evaluating the CENet model.
+
+It includes functions to load datasets, train the model on a single fold, and
+apply various pre-processing and setup steps necessary for training and
+evaluation. The module focuses on handling molecular data, specifically with
+respect to terms, weights, and contributions.
+"""
+
 import argparse
 from typing import Any, Tuple
 from censible.debug import grid_channel_to_xyz_file
@@ -17,7 +26,7 @@ from torch.nn import init
 def load_split(
     types_filename: str, batch_size: int, data_dir: str, is_training_set: bool = False
 ) -> Tuple[molgrid.molgrid.ExampleProvider, Any]:
-    """Loads the data from the types file .
+    """Load the data from the types file.
     
     Args:
         types_filename (str): A string representing the path to the types file.
@@ -32,7 +41,6 @@ def load_split(
         Otherwise, it will be a list of tuples of the gninatypes filenames
         (receptor, ligand).
     """
-
     types_filename = f"{data_dir}/{types_filename}"
 
     # You need to keep track of the ligand and receptor filenames
@@ -98,7 +106,6 @@ def train_single_fold(
     Returns:
         A tuple containing information about the results, etc.
     """
-
     # TODO: Divide this monster function into subfunctions
 
     # The main object. See
@@ -339,7 +346,6 @@ def train_single_fold(
 
 def weights_init(m: "AvgPool3d"):
     """Initialize weights of the model."""
-
     if isinstance(m, (nn.Conv3d, nn.Linear)):
         init.xavier_uniform_(m.weight.data)
         init.constant_(m.bias.data, 0)
@@ -351,7 +357,6 @@ def get_args() -> dict:
     Returns:
         args: A dictionary of the arguments from the command line.
     """
-
     params_info = [
         {
             "name": "epochs",
@@ -403,8 +408,7 @@ def get_args() -> dict:
 
 
 def validate_params(params: dict) -> dict:
-    """Validate the parameters. Also makes slight adjustments to ensure all
-    works properly.
+    """Validate parameters. Also adjust parameter to ensure all works properly.
     
     Args:
         params: A dictionary of the parameters.
@@ -412,7 +416,6 @@ def validate_params(params: dict) -> dict:
     Returns:
         params: The validated parameters.
     """
-
     # Make sure termtypes is valid
     if params["termtypes"] not in ["all", "smina", "gaussian"]:
         raise ValueError("termtypes must be 'all', 'smina', or 'gaussian'")

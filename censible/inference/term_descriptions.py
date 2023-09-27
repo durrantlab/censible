@@ -1,3 +1,5 @@
+"""Utilities to process/interpret terms (e.g., atom-atom interactions)."""
+
 import re
 
 
@@ -11,7 +13,6 @@ def get_numeric_val(s: str, varname: str) -> str:
     Returns:
         str: The value of the variable.
     """
-
     # v is a number, so only digits, +/-, and .
     num_regex = "([e0-9\.\+\-]+)"
     v = re.search(f"{varname}={num_regex}", s)
@@ -28,7 +29,6 @@ def full_term_description(term: str) -> str:
     Returns:
         str: The more complete description.
     """
-
     # Given that making explainable scoring functions is the goal, good to
     # provide more complete description of the terms. This function tries to do
     # so semi-programatically.
