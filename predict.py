@@ -6,6 +6,7 @@ output in TSV (Tab-Separated Values) format.
 """
 
 from censible.inference.inference import get_cmd_args, load_example, load_model, apply
+from censible.inference.pdbs import save_pdbs_with_per_atom_gauss_vals_in_beta
 from censible.inference.tsv_out_writer import TSVWriter
 
 args = get_cmd_args()
@@ -19,7 +20,7 @@ print("")
 
 all_tsv_output = ""
 
-for lig_path in args.ligpath:
+for lig_idx, lig_path in enumerate(args.ligpath):
     tsv_writer = TSVWriter(args, lig_path)
 
     # Load the data. TODO: One ligand at a time here for simplicity's sake.
@@ -58,6 +59,21 @@ for lig_path in args.ligpath:
     )
 
     all_tsv_output += tsv_writer.content
+
+    if args.include_pdb_output:
+        if lig_idx == 0:
+            save_pdbs_with_per_atom_gauss_vals_in_beta(
+                all_tsv_output,
+                args.smina_exec_path,
+                args.obabel_exec_path,
+                lig_path,
+                args.recpath,
+                args.out,
+            )
+        else:
+            print(
+                "WARNING (--include_pdb_output): Only the first receptor/ligand complex will be saved as PDB files."
+            )
 
 if args.out != "":
     with open(args.out, "w") as f:

@@ -6,7 +6,7 @@ specifically with respect to terms, weights, and contributions in a format
 suitable for visualization and analysis.
 """
 
-
+import os
 import argparse
 from typing import List
 import numpy as np
@@ -67,6 +67,9 @@ class TSVWriter:
             summary += f"\nSee {self.args.out} for predicted weights and contributions."
         else:
             summary += "\nWARNING: No output file specified (--out). Not saving weights and contributions."
+
+        if self.args.include_pdb_output:
+            summary += f"\n\nSee {os.path.dirname(self.args.out) + os.sep} for PDB files with atom_type_gaussian contributions in the beta columns."
 
         summary += "\n\n" + self.bar + "\n"
 

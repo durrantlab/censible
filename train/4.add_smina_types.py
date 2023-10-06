@@ -15,7 +15,7 @@ def process_line(line):
     try:
         smina_exec = "smina/smina.static"
         out = subprocess.check_output(
-            f"{smina_exec} --custom_scoring allterms.txt --score_only -r ./{r} -l ./{l}",
+            f"{smina_exec} --custom_scoring allterms.txt --score_only -r ./{r} -l ./{l} > /dev/null",
             shell=True,
         )
         out = out.decode()

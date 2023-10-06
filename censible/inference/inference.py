@@ -52,7 +52,10 @@ def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
     """
     if os.path.exists(f"{filename}.censible.converted.pdb"):
         # For receptor, if converted already exists, don't recreate it.
-        print(f"\nWARNING: using existing converted receptor file:\n{filename}.censible.converted.pdb\nDelete this file if you want to recreate it.", end="")
+        print(
+            f"\nWARNING: using existing converted receptor file:\n{filename}.censible.converted.pdb\nDelete this file if you want to recreate it.",
+            end="",
+        )
         return f"{filename}.censible.converted.pdb"
 
     # First, remove all waters
@@ -66,13 +69,13 @@ def fix_receptor_structure(filename: str, obabel_exec: str) -> str:
 
     # Second remove existing hydrogen atoms
     subprocess.check_output(
-        f"{obabel_exec} {filename}.no_waters.tmp.pdb -O {filename}.no_waters.noh.tmp.pdb -d",
+        f"{obabel_exec} {filename}.no_waters.tmp.pdb -O {filename}.no_waters.noh.tmp.pdb -d > /dev/null",
         shell=True,
     )
 
     # Third, protonate at pH7
     subprocess.check_output(
-        f"{obabel_exec} {filename}.no_waters.noh.tmp.pdb -O {filename}.censible.converted.pdb -p 7",
+        f"{obabel_exec} {filename}.no_waters.noh.tmp.pdb -O {filename}.censible.converted.pdb -p 7 > /dev/null",
         shell=True,
     )
 
@@ -98,14 +101,14 @@ def fix_ligand_structure(filename: str, obabel_exec: str) -> str:
 
     Note: -p 7 reassign partial charges, so old ones are not retained.
     """
-    cmd = f"{obabel_exec} {filename} -O {filename}.noh.tmp.mol2 -d"
+    cmd = f"{obabel_exec} {filename} -O {filename}.noh.tmp.mol2 -d > /dev/null"
     subprocess.check_output(cmd, shell=True)
 
     # Adding gasteiger just in case default changes. Note: I have confirmed that
     # "-p 7 --partialcharge gasteiger" gives the same as "-p 7" in a test
     # ligand. In case you ever need to know, you used obabel 3.1.0 to prepare
     # ligands for training.
-    cmd = f"{obabel_exec} {filename}.noh.tmp.mol2 -O {filename}.censible.converted.mol2 -p 7 --partialcharge gasteiger"
+    cmd = f"{obabel_exec} {filename}.noh.tmp.mol2 -O {filename}.censible.converted.mol2 -p 7 --partialcharge gasteiger > /dev/null"
     subprocess.check_output(cmd, shell=True)
 
     # Clean up
@@ -333,21 +336,28 @@ def get_cmd_args() -> argparse.Namespace:
         help="path to the open babel (obabel) executable",
     )
 
-    # Use store_true
+    # Optional parameters
     parser.add_argument(
         "--use_cpu",
         action="store_true",
         help="use cpu (uses cuda by default, if not specified)",
     )
 
-    # Optional parameters
     parser.add_argument(
         "--model_dir",
         default=None,
         help="path to a directory containing files such as model.pt, which_precalc_terms_to_keep.npy, etc.",
     )
 
-    parser.add_argument("--out", default="", help="path to save output tsv file")
+    parser.add_argument(
+        "--include_pdb_output",
+        action="store_true",
+        help="save receptor and ligand pdb files with the contributions of the smina atom_type_gaussian terms in the beta columns",
+    )
+
+    parser.add_argument(
+        "--out", default="", help="path to save optional output tsv file"
+    )
 
     args = parser.parse_args()
 
@@ -372,6 +382,14 @@ def get_cmd_args() -> argparse.Namespace:
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
         args.model_dir = data_file_path(f"model_allcen3{os.sep}")
+    
+    # If args.include_pdb_output but not args.out, set args.out to the current
+    # directory.
+    if args.include_pdb_output and args.out == "":
+        args.out = "./"
+
+    # If args.out is a directory, append output.tsv to it.
+    if os.path.isdir(args.out):
+        args.out = os.path.join(args.out, "output.tsv")
 
     return args
-

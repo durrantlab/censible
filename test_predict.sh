@@ -10,6 +10,10 @@ echo "obabel path: " $obabel_exec
 # Remove the converted receptor file if it exists (to regenerate it).
 rm -f censible/data/test/1wdn_receptor.pdb.converted.pdb
 
+# Remove previous output
+rm -rf test_output/
+mkdir test_output/
+
 # Iterate through these files: censible/data/test/1wdn_ligand.*
 for f in censible/data/test/1wdn_ligand.*
 do
@@ -38,8 +42,8 @@ python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \
-                  --out test_out.tsv \
-                  --use_cpu
+                  --out test_output/test_out.tsv \
+                  --use_cpu --include_pdb_output
 
 # Clean up
 rm -f censible/data/test/1wdn_ligand.*converted.*
