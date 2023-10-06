@@ -216,7 +216,7 @@ class PDBParser:
         os.system(cmd)
         with open(f"{self.filename}.types.txt") as f:
             lines = f.readlines()
-        # os.remove(f"{self.filename}.types.txt")
+        os.remove(f"{self.filename}.types.txt")
         lines = [l for l in lines if "<" in l]
         types = []
         coords = []
@@ -239,6 +239,7 @@ class PDBParser:
                 )
             else:
                 print("WARNING! No match: " + line.strip())
+                print("    This can occur if using older verisons of smina. We recommend smina 2020.12.10.")
         coords = np.array(coords)
 
         # For each coordinate in coords, I want to find the coordinate in
