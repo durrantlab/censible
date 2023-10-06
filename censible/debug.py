@@ -1,17 +1,20 @@
+"""This module provides debugging utilities."""
+
 import itertools
 import os
 import molgrid
 
 # The order of the grids:
 grid_order = [
-    l + "_RECEPTOR" for l in list(molgrid.defaultGninaReceptorTyper.get_type_names())
+    f"{l}_RECEPTOR" for l in list(molgrid.defaultGninaReceptorTyper.get_type_names())
 ]
 grid_order += [
-    l + "_LIGAND" for l in list(molgrid.defaultGninaLigandTyper.get_type_names())
+    f"{l}_LIGAND" for l in list(molgrid.defaultGninaLigandTyper.get_type_names())
 ]
 
+
 def grid_channel_to_xyz_file(grid_channel) -> str:
-    """Converts a grid channel to a .xyz file for visualization in VMD.
+    """Convert a grid channel to a .xyz file for visualization in VMD.
     
     Args:
         grid_channel: A 3D numpy array representing a grid channel.
@@ -19,7 +22,6 @@ def grid_channel_to_xyz_file(grid_channel) -> str:
     Returns:
         A string representing the .xyz file.
     """
-
     threshold = 0.85
 
     x_max, y_max, z_max = grid_channel.shape
@@ -37,10 +39,16 @@ def grid_channel_to_xyz_file(grid_channel) -> str:
 
 
 def save_all_channels(input_batch_voxel):
-    # TODO: Debug below
+    """Save all channels of a voxel to .xyz files.
+    
+    Args:
+        input_batch_voxel: A 4D numpy array representing a voxel.
+
+    TODO: Debug. Not currently used.
+    """
     for channel in range(len(input_batch_voxel[0])):
         name = grid_order[channel]
-        filename = name + ".tmp" + str(channel) + ".xyz"
+        filename = f"{name}.tmp{str(channel)}.xyz"
         if os.path.exists(filename):
             os.remove(filename)
         summed = input_batch_voxel[0][channel].sum().item()

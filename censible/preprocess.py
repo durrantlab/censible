@@ -1,3 +1,10 @@
+"""This module provides utilities for data preprocessing.
+
+It provides functions to preprocess the data, remove rare terms, and remove
+problematic terms from the dataset, ensuring that the dataset is ready for model
+training.
+"""
+
 from censible.data.get_data_paths import data_file_path
 import molgrid
 import torch
@@ -23,7 +30,6 @@ def preprocess(termtypes: str, data_dir: str):
             precalc_term_scales: A tensor of floats representing the scale
                 factors for each term.
     """
-
     if data_dir[-1] != "/":
         data_dir += "/"
 
@@ -90,7 +96,7 @@ def remove_rare_terms(
     term_names: np.ndarray,
     which_precalc_terms_to_keep: np.ndarray = None,
 ) -> np.ndarray:
-    """Removes rare terms from the data.
+    """Remove rare terms from the data.
     
     Args:
         all_terms (np.ndarray): A 2D numpy array representing all the terms for
@@ -106,7 +112,6 @@ def remove_rare_terms(
     Returns:
         A boolean array representing which terms to keep.
     """
-
     global RARE_TERM_RATIO_CUTOFF
 
     # If which_precalc_terms_to_keep is not provided, then it is calculated here. All trues.
@@ -159,11 +164,15 @@ def remove_rare_terms(
 def remove_problematic_smina_terms(
     which_precalc_terms_to_keep: np.ndarray, term_names: list
 ) -> np.ndarray:
-    """Removes problematic smina terms from consideration. Difficult to predict
-    hydrogens, so removing anything related to hydrogen bonds. Similarly,
-    electrostatics are difficult to predict consistently (many different
-    approaches). Finally, also removing ad4_solvation, which seems to depend on
-    hydrogens, and num_tors_sqr* terms, given that num_tors is retained.
+    """Remove problematic smina terms from consideration.
+    
+    Note: Difficult to predict hydrogens, so removing anything related to
+    hydrogen bonds. Similarly, electrostatics are difficult to predict
+    consistently (many different approaches). Finally, also removing
+    ad4_solvation, which seems to depend on hydrogens, and num_tors_sqr* terms,
+    given that num_tors is retained.
+
+    Note: Not currently used.
     
     Args:
         which_precalc_terms_to_keep (np.ndarray): A boolean array representing
@@ -174,7 +183,6 @@ def remove_problematic_smina_terms(
     Returns:
         A boolean array representing which terms to keep.
     """
-
     idxs_to_remove = []
     for i, term_name in enumerate(term_names):
         term_name = term_name.lower()
@@ -217,8 +225,7 @@ def remove_problematic_smina_terms(
 def get_precalc_term_scales(
     all_terms: np.ndarray, which_precalc_terms_to_keep: np.ndarray
 ) -> torch.Tensor:
-    """Gets the scales for each term. The scales will normalize values when
-    multipled.
+    """Get scales for each term. Scales will normalize values when multipled.
     
     Args:
         all_terms (np.ndarray): A 2D numpy array representing all the terms for
@@ -229,7 +236,6 @@ def get_precalc_term_scales(
     Returns:
         A 1D tensor representing the scales for each term.
     """
-
     MAX_VAL_AFTER_NORM = 1.0
 
     # Scales will normalize values when multipled.

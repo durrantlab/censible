@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""take a regular types file and create one with smina terms in it"""
+"""Take a regular types file and create one with smina terms in it."""
 
 import subprocess, re
 from concurrent.futures import ProcessPoolExecutor

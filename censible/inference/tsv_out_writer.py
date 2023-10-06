@@ -1,3 +1,12 @@
+"""
+This module provides a TSVWriter class.
+
+The class creates Tab-Separated Values (TSV) output for molecular data,
+specifically with respect to terms, weights, and contributions in a format
+suitable for visualization and analysis.
+"""
+
+
 import argparse
 from typing import List
 import numpy as np
@@ -6,6 +15,8 @@ from censible.inference.term_descriptions import full_term_description
 
 
 class TSVWriter:
+    """A class for writing the TSV output."""
+
     bar = "=====================================\n"
     tsv_output = ""
     args = None
@@ -18,7 +29,6 @@ class TSVWriter:
         Args:
             args (argparse.Namespace): The arguments from argparse.
         """
-
         self.args = args
         self.lig_path = lig_path
 
@@ -28,7 +38,6 @@ class TSVWriter:
         Args:
             predicted_affinity (torch.Tensor): The predicted affinity.
         """
-
         summary = "CENsible 1.0\n\n"
         summary += f"receptor: {self.args.recpath}\n"
         summary += f"ligand:   {self.lig_path}\n"
@@ -84,7 +93,6 @@ class TSVWriter:
             weights_predict (np.ndarray): The predicted weights.
             contributions_predict (np.ndarray): The predicted contributions.
         """
-
         if self.args.out == "":
             # If not specifying an output file, don't bother with the rest.
             return
@@ -143,11 +151,10 @@ class TSVWriter:
 
     @property
     def content(self):
-        """The content of the TSV output.
+        """Return the content of the TSV output.
 
         Returns:
             str: The content of the TSV output.
         """
-
         return self.summary + self.terms_weights_contributions
 
