@@ -350,13 +350,11 @@ def get_cmd_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--include_pdb_output",
-        action="store_true",
-        help="save receptor and ligand pdb files with the contributions of the smina atom_type_gaussian terms in the beta columns",
+        "--pdb_out", default="", help="path to save optional PDB file with the contributions of the smina atom_type_gaussian terms in the beta columns"
     )
 
     parser.add_argument(
-        "--out", default="", help="path to save optional output tsv file"
+        "--tsv_out", default="", help="path to save optional output tsv file"
     )
 
     args = parser.parse_args()
@@ -382,14 +380,9 @@ def get_cmd_args() -> argparse.Namespace:
     # If model_dir is not provided, use the default model_dir
     if args.model_dir is None:
         args.model_dir = data_file_path(f"model_allcen3{os.sep}")
-    
-    # If args.include_pdb_output but not args.out, set args.out to the current
-    # directory.
-    if args.include_pdb_output and args.out == "":
-        args.out = "./"
 
-    # If args.out is a directory, append output.tsv to it.
-    if os.path.isdir(args.out):
-        args.out = os.path.join(args.out, "output.tsv")
+    # If args.tsv_out is a directory, append output.tsv to it.
+    if os.path.isdir(args.tsv_out):
+        args.tsv_out = os.path.join(args.tsv_out, "output.tsv")
 
     return args

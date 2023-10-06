@@ -1,4 +1,4 @@
-from .consts import TYPES_TO_RADIUS, to_censible_pair
+from .consts import to_censible_pair
 import numpy as np
 import os
 from typing import Tuple
@@ -8,17 +8,25 @@ import re
 class PDBParser:
     """Parses a PDB file and assigns atom types using smina."""
 
-    def __init__(self, filename: str, smina_exec_path: str, obabel_exec_path: str):
+    def __init__(
+        self,
+        filename: str,
+        smina_exec_path: str,
+        obabel_exec_path: str,
+        do_type: bool = True,
+    ):
         """The init function.
         
         Args:
             filename (str): The filename to parse (PDB format
             smina_exec_path (str): The path to the smina executable.
             obabel_exec_path (str): The path to the obabel executable.
+            do_type (bool): Whether to assign atom types.
         """
         self.filename = filename
         self.atoms = []
         self.coordinates = []
+        self.do_type = do_type
         self.parse_file(smina_exec_path, obabel_exec_path)
 
     def parse_file(self, smina_exec_path: str, obabel_exec_path: str):
@@ -28,64 +36,86 @@ class PDBParser:
             smina_exec_path (str): The path to the smina executable.
             obabel_exec_path (str): The path to the obabel executable.
         """
-        filename_to_use = self.filename
+        filename_actual = self.filename
 
         # If self.filename doens't end in ".pdb", then we need to convert it to
         # PDB format first using obabel. Note that the assumption here is that
         # it has already been properly pronated.
         if not self.filename.lower().endswith(".pdb"):
-            filename_to_use = filename_to_use + ".tmp.pdb"
-            cmd = f"{obabel_exec_path} {self.filename} -O {filename_to_use} > /dev/null"
+            filename_actual = filename_actual + ".tmp.pdb"
+            cmd = f"{obabel_exec_path} {self.filename} -O {filename_actual} > /dev/null"
             os.system(cmd)
 
-        with open(filename_to_use, "r") as f:
-            atom_idx = 0
-            for line in f:
-                if "HOH" in line or "WAT" in line or "TIP" in line:
-                    # No water molecules
-                    continue
+        # Save orig_content for reference
+        with open(filename_actual, "r") as f:
+            self.orig_content = f.read()
 
-                if line.startswith(("ATOM", "HETATM")):
-                    x = float(line[30:38].strip())
-                    y = float(line[38:46].strip())
-                    z = float(line[46:54].strip())
-                    atom_data = {
-                        "atom_idx": atom_idx,
-                        "record": line[0:6].strip(),
-                        "atom_num": int(line[6:11].strip()),
-                        "atom_name": line[12:16].strip(),
-                        "alt_loc": line[16].strip(),
-                        "res_name": line[17:20].strip(),
-                        "chain_id": line[21].strip(),
-                        "res_num": int(line[22:26].strip()),
-                        "iCode": line[26].strip(),
-                        "occupancy": float(line[54:60].strip())
-                        if line[54:60].strip()
-                        else None,
-                        "temp_factor": float(line[60:66].strip())
-                        if line[60:66].strip()
-                        else None,
-                        "element": line[76:78].strip(),
-                        "charge": line[78:80].strip(),
-                        "type": "",
-                        "type_pairs": {},
-                    }
-                    atom_idx = atom_idx + 1
-                    self.atoms.append(atom_data)
-                    self.coordinates.append([x, y, z])
+        lines = self.orig_content.split("\n")
+        atom_idx = 0
+        for line in lines:
+            if "HOH" in line or "WAT" in line or "TIP" in line:
+                # No water molecules
+                continue
+
+            if line.startswith(("ATOM", "HETATM")):
+                x = float(line[30:38].strip())
+                y = float(line[38:46].strip())
+                z = float(line[46:54].strip())
+                atom_data = {
+                    "atom_idx": atom_idx,
+                    "record": line[0:6].strip(),
+                    "atom_num": int(line[6:11].strip()),
+                    "atom_name": line[12:16],  # don't strip
+                    "alt_loc": line[16].strip(),
+                    "res_name": line[17:20].strip(),
+                    "chain_id": line[21].strip(),
+                    "res_num": int(line[22:26].strip()),
+                    "iCode": line[26].strip(),
+                    "occupancy": float(line[54:60].strip())
+                    if line[54:60].strip()
+                    else None,
+                    "temp_factor": float(line[60:66].strip())
+                    if line[60:66].strip()
+                    else None,
+                    "element": line[76:78],  # don't strip
+                    "charge": line[78:80].strip(),
+                    "type": "",
+                    "type_pairs": {},
+                }
+                atom_idx = atom_idx + 1
+                self.atoms.append(atom_data)
+                self.coordinates.append([x, y, z])
 
         self.coordinates = np.array(self.coordinates)
 
-        self.assign_atom_types(smina_exec_path)
+        if self.do_type:
+            self.assign_atom_types(smina_exec_path)
 
-        # Now keep only those atoms with types. Remove also the corresponding
-        # entries in self.coordinates
-        self.atoms = [a for a in self.atoms if a["type"] != ""]
-        self.coordinates = self.coordinates[[a["atom_idx"] for a in self.atoms]]
+            # Now keep only those atoms with types. Remove also the corresponding
+            # entries in self.coordinates
+            self.atoms = [a for a in self.atoms if a["type"] != ""]
+            self.coordinates = self.coordinates[[a["atom_idx"] for a in self.atoms]]
 
         # Clean up if needed
         if not self.filename.lower().endswith(".pdb"):
-            os.remove(filename_to_use)
+            os.remove(filename_actual)
+
+    def get_from_orig_pdb(self, chain_replacement: str = None) -> str:
+        """Loads from the originalPDB file, replacing the chain, but not doing
+        any further processing.
+        
+        Args:
+            chain_replacement (str): The chain replacement character. Keep
+                original if None.
+            
+        Returns:
+            str: The PDB file contents.
+        """
+        lines = self.orig_content.split("\n")
+        lines = [l for l in lines if l.startswith("ATOM") or l.startswith("HETATM")]
+        if chain_replacement is not None:
+            lines = [l[:21] + chain_replacement + l[22:] for l in lines]
+        return ("\n".join(lines)).strip()
 
     def total_gauss(self, type_pair: Tuple) -> float:
         """Returns the total Gaussian value (across all atoms) for the given
@@ -105,6 +135,42 @@ class PDBParser:
             ]
         )
 
+    def get_pdb_text(
+        self,
+        type_pairs_for_beta: Tuple = None,
+        beta_scale: float = 1,
+        chain_id: str = None,
+    ) -> str:
+        """Returns the PDB text.
+        
+        Args:
+            type_pairs_for_beta (Tuple): If not None, then the beta column will
+                contain the Gaussian value for the given type pair.
+            beta_scale (float): The value to scale the Gaussian value by.
+            chain_id (str): The chain. Keep original if None.
+            
+        Returns:
+            str: The PDB text.
+        """
+        pdb_txt = ""
+        for i, atom in enumerate(self.atoms):
+            if type_pairs_for_beta is not None:
+                # The user has specified a specific pair
+                type_pairs_for_beta = to_censible_pair(type_pairs_for_beta)
+                if type_pairs_for_beta in atom["type_pairs"]:
+                    # This atom has a value for the given type pair
+                    beta_val = atom["type_pairs"][type_pairs_for_beta] * beta_scale
+                    beta_val = round(beta_val, 2)  # PDB allows only 2 decimal places
+                    # if beta_val != 0:
+                    # Could be 0 because of rounding. Don't include in PDB
+                    # if rounds to 0.
+                    pdb_txt += self.make_pdb_line(i, beta_val, chain_id) + "\n"
+            else:
+                # The user has not specified a specific pair. Use all atoms.
+                pdb_txt += self.make_pdb_line(i, 0, chain_id) + "\n"
+
+        return pdb_txt
+
     def save_pdb(
         self, filename: str, type_pairs_for_beta: Tuple = None, beta_scale: float = 1
     ):
@@ -116,32 +182,29 @@ class PDBParser:
                 contain the Gaussian value for the given type pair.
             beta_scale (float): The value to scale the Gaussian value by.
         """
+        pdb_txt = self.get_pdb_text(type_pairs_for_beta, beta_scale)
         with open(filename, "w") as f:
-            for i, atom in enumerate(self.atoms):
-                beta_val = 0
-                if type_pairs_for_beta is not None:
-                    type_pairs_for_beta = to_censible_pair(type_pairs_for_beta)
-                    if type_pairs_for_beta in atom["type_pairs"]:
-                        beta_val = atom["type_pairs"][type_pairs_for_beta] * beta_scale
-                f.write(self.make_pdb_line(i, beta_val) + "\n")
+            f.write(pdb_txt)
 
-    def make_pdb_line(self, atom_idx: int, beta_val: float):
+    def make_pdb_line(self, atom_idx: int, beta_val: float, chain_id: str = None):
         """Makes a PDB line for the given atom index and beta value.
         
         Args:
             atom_idx (int): The atom index.
             beta_val (float): The beta value.
+            chain_id (str): The chain. Keep original if None.
         """
         atom = self.atoms[atom_idx]
+        atom_num = atom["atom_num"]
         atom_name = atom["atom_name"]
         res_name = atom["res_name"]
-        chain_id = atom["chain_id"]
+        chain_id = atom["chain_id"] if chain_id is None else chain_id
         res_num = atom["res_num"]
         x, y, z = self.coordinates[atom_idx]
-        atom_type = atom["type"]
+        # atom_type = atom["type"]
         element = atom["element"]
-        radius = TYPES_TO_RADIUS[atom_type]
-        return f"ATOM  {atom_idx:5d} {atom_name:4s} {res_name:3s} {chain_id:1s}{res_num:4d}    {x:8.3f}{y:8.3f}{z:8.3f}  1.00{beta_val:6.2f}          {element:2s}  {radius:6.3f}"
+        # radius = TYPES_TO_RADIUS[atom_type]
+        return f"ATOM  {atom_num:5d} {atom_name} {res_name:3s} {chain_id:1s}{res_num:4d}    {x:8.3f}{y:8.3f}{z:8.3f}  1.00{beta_val:6.2f}          {element}  "  # {radius:6.3f}"
 
     def assign_atom_types(self, smina_exec: str):
         """Assigns atom types using smina.

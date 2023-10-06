@@ -60,22 +60,23 @@ for lig_idx, lig_path in enumerate(args.ligpath):
 
     all_tsv_output += tsv_writer.content
 
-    if args.include_pdb_output:
+    if args.pdb_out != "":
         if lig_idx == 0:
             save_pdbs_with_per_atom_gauss_vals_in_beta(
                 all_tsv_output,
+                predicted_affinity,
                 args.smina_exec_path,
                 args.obabel_exec_path,
                 lig_path,
                 args.recpath,
-                args.out,
+                args.pdb_out,
             )
         else:
             print(
-                "WARNING (--include_pdb_output): Only the first receptor/ligand complex will be saved as PDB files."
+                "WARNING (--pdb_out): Only the first receptor/ligand complex will be saved as PDB files."
             )
 
-if args.out != "":
-    with open(args.out, "w") as f:
+if args.tsv_out != "":
+    with open(args.tsv_out, "w") as f:
         # Report the receptor/ligand:
         f.write(all_tsv_output)

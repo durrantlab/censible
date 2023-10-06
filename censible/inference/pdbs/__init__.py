@@ -78,42 +78,25 @@ def _fix_path(path: str) -> str:
 
 def save_pdbs_with_per_atom_gauss_vals_in_beta(
     censible_output_contents: str,
+    predicted_affinity: float,
     smina_exec_path: str,
     obabel_exec_path: str,
     lig_path: str,
     rec_path: str,
-    out_path: str
+    out_path: str,
 ):
     """Saves the PDBs, with per-atom gauss values in the beta columns.
 
     Args:
         censible_output_contents (str): The contents of the CENsible output
             file.
+        predicted_affinity (float): The predicted affinity.
         smina_exec_path (str): The path to the smina executable.
         obabel_exec_path (str): The path to the obabel executable.
         lig_path (str): The path to the ligand PDB.
         rec_path (str): The path to the receptor PDB.
         out_path (str): The path to save the PDBs to.
     """
-
-    # If out_path is a file (not a directory), keep only the dir name.
-    if out_path == "":
-        out_path = "./"
-    
-    if os.path.exists(out_path) and os.path.isfile(out_path):
-        # Already exists, and pointing to a file. Keep only the dir name.
-        out_path = os.path.dirname(out_path)
-    elif not os.path.exists(out_path) and os.path.isdir(os.path.dirname(out_path)):
-        # Doesn't exist, but the parent dir does. Keep only the dir name. Here
-        # assuming they specified the path to the (not yet existant) tsv
-        # directly.
-        out_path = os.path.dirname(out_path)
-    
-    # If none of the above are triggered, then out_path is either an existing
-    # directory, or a non-existing path that is not in an existing directory.
-    # The former case is ok (pointing to a directory). The latter case will
-    # throw an error downstream.
-
     rec_path = _fix_path(rec_path)
     lig_path = _fix_path(lig_path)
 
@@ -124,4 +107,10 @@ def save_pdbs_with_per_atom_gauss_vals_in_beta(
     assign_gauss_vals(receptor, ligand, censible_output)
     sums_per_pair = calc_gauss_sums_per_pair(receptor, ligand)
     verify_summed_gauss(sums_per_pair, censible_output)
-    save_pdbs(receptor, ligand, sums_per_pair, out_path)
+    save_pdbs(
+        receptor,
+        ligand,
+        sums_per_pair,
+        out_path,
+        predicted_affinity,
+    )

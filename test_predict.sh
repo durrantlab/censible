@@ -37,13 +37,14 @@ python predict.py --ligpath censible/data/test/1wdn_ligand.pdbqt censible/data/t
 # Clean up
 rm -f censible/data/test/1wdn_ligand.*converted.*
 
-# Test --use_cpu flag to avoid cuda. Also test --out flag.
+# Test --use_cpu flag to avoid cuda. Also test --tsv_out flag.
 python predict.py --ligpath censible/data/test/1wdn_ligand.pdb \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path $smina_exec \
                   --obabel_exec_path $obabel_exec \
-                  --out test_output/test_out.tsv \
-                  --use_cpu --include_pdb_output
+                  --tsv_out test_output/test_out.tsv \
+                  --pdb_out test_output/test_out.pdb \
+                  --use_cpu
 
 # Clean up
 rm -f censible/data/test/1wdn_ligand.*converted.*

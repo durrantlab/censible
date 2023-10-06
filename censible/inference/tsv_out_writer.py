@@ -63,13 +63,13 @@ class TSVWriter:
 
         summary += f"score:    {round(predicted_affinity, 5)} ({kd})\n"
 
-        if self.args.out != "":
-            summary += f"\nSee {self.args.out} for predicted weights and contributions."
+        if self.args.tsv_out != "":
+            summary += f"\nSee {self.args.tsv_out} for predicted weights and contributions."
         else:
-            summary += "\nWARNING: No output file specified (--out). Not saving weights and contributions."
+            summary += "\nWARNING: No output file specified (--tsv_out). Not saving weights and contributions."
 
-        if self.args.include_pdb_output:
-            summary += f"\n\nSee {os.path.dirname(self.args.out) + os.sep} for PDB files with atom_type_gaussian contributions in the beta columns."
+        if self.args.pdb_out:
+            summary += f"\n\nSee {self.args.pdb_out} for PDB files with atom_type_gaussian contributions in the beta columns."
 
         summary += "\n\n" + self.bar + "\n"
 
@@ -96,7 +96,7 @@ class TSVWriter:
             weights_predict (np.ndarray): The predicted weights.
             contributions_predict (np.ndarray): The predicted contributions.
         """
-        if self.args.out == "":
+        if self.args.tsv_out == "":
             # If not specifying an output file, don't bother with the rest.
             return
 

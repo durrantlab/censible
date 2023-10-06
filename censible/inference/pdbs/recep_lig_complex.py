@@ -144,6 +144,7 @@ def save_pdbs(
     ligand: PDBParser,
     sums_per_pair: dict,
     out_path: str,
+    predicted_affinity: float,
     beta_scale=10,
 ):
     """Saves the PDBs, with per-atom gauss values in the beta column.
@@ -152,29 +153,75 @@ def save_pdbs(
         receptor (PDBParser): The receptor.
         ligand (PDBParser): The ligand.
         sums_per_pair (dict): The summed Gaussian values.
-        out_path (str): The path to save the PDBs to.
+        out_path (str): The path to save the PDB to.
+        predicted_affinity (float): The CENsible-predicted affinity.
         beta_scale (float): The value to scale the Gaussian value by.
     """
+
+    # Y, Z reserved for receptor and ligand
+    chain_ids_to_use = [
+        char for char in "ABCDEFGHIJKLMNOPQRSTUVWXabcdefghijklmnopqrstuvwxyz"
+    ]
 
     pairs = [p for p in sums_per_pair.keys()]
 
     # Sort by total_gauss
     pairs = sorted(pairs, key=receptor.total_gauss, reverse=True)
 
+    header_remark = "REMARK CHAIN  PAIR                                                          CONTRIBUTION\n"
+    pairs_pdb_txt = ""
+
     for pair_idx, pair in enumerate(pairs):
         pair = to_censible_pair(pair)
-        receptor.save_pdb(
-            os.path.join(
-                out_path, f"{pair_idx + 1}.receptor_contribs_{pair[0]}_{pair[1]}.pdb"
-            ),
-            type_pairs_for_beta=pair,
-            beta_scale=beta_scale,
+        total_gauss = receptor.total_gauss(pair) + ligand.total_gauss(pair)
+        chain_id = chain_ids_to_use[pair_idx]
+        chain_pair = f"{pair[0]} - {pair[1]}"
+        header_remark += (
+            f"REMARK {chain_id:5s}  {chain_pair:63s} {total_gauss:>10.5f}\n"
         )
-        ligand.save_pdb(
-            os.path.join(
-                out_path, f"{pair_idx + 1}.ligand_contribs_{pair[0]}_{pair[1]}.pdb"
-            ),
-            type_pairs_for_beta=pair,
-            beta_scale=beta_scale,
+        pairs_pdb_txt += f"REMARK ATOM-TYPE PAIR: {pair[0]} - {pair[1]}\n"
+        pairs_pdb_txt += f"REMARK CONTRIBUTION TO SCORE: {total_gauss}\n"
+        pairs_pdb_txt += receptor.get_pdb_text(
+            type_pairs_for_beta=pair, beta_scale=beta_scale, chain_id=chain_id
         )
+        pairs_pdb_txt += "TER\n"
+        pairs_pdb_txt += ligand.get_pdb_text(
+            type_pairs_for_beta=pair, beta_scale=beta_scale, chain_id=chain_id
+        )
+        pairs_pdb_txt += "TER\n\n"
+
+    # Get the origianl receptor and ligand files
+    receptor_pdb_txt = receptor.get_from_orig_pdb("Y")
+    ligand_pdb_txt = ligand.get_from_orig_pdb("Z")
+
+    pairs_pdb_txt = f"""REMARK CENSible OUTPUT
+
+REMARK CENsible-predicted contributions associated with the 
+REMARK atom_type_gaussian smina terms can be attributed to specific receptor
+REMARK and ligand atoms. This PDB file includes the per-atom contributions in
+REMARK the beta columns, scaled by {beta_scale}.
+
+REMARK For reference, the CENsible score for this complex is {float(predicted_affinity):.5f}.
+REMARK Summing the contributions associated with the atom_type_gaussian smina
+REMARK terms shown below gives only {sum(sums_per_pair.values()):.5f}.
+
+{header_remark.strip()}
+
+REMARK RECEPTOR
+{receptor_pdb_txt.strip()}
+TER
+
+REMARK LIGAND
+{ligand_pdb_txt.strip()}
+TER
+
+{pairs_pdb_txt}
+"""
+
+    with open(out_path, "w") as f:
+        f.write(pairs_pdb_txt)
+    
+    # For convenience sake, also save the receptor and ligand as a single file.
+    with open(out_path.replace(".pdb", ".rec_lig_only.pdb"), "w") as f:
+        f.write(receptor_pdb_txt + "\nTER\n" + ligand_pdb_txt + "\nTER\n")
 
