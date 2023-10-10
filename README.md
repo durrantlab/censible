@@ -139,11 +139,11 @@ tab-delimited file. It will also output the following additional information:
 
 **NOTE:** The final affinity is the sum of the predicted contributions.
 
-### Saving Gaussian Steric Terms to a PDB File
+### Saving Per-Atom Gaussian Steric Terms to a PDB File
 
 CENsible can also output the per-atom contributions associated with _smina_'s
 Gaussian steric (`atom_type_gaussian`) terms to a PDB file. Use the `--pdb_out`
-term. For example:
+flag. For example:
 
 ```bash
 python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
