@@ -117,15 +117,45 @@ your smina and obabel executables, respectively.
 
 In the above simple example, CENsible only outputs the predicted affinity. If
 you also wish to output CENsible's predicted weights (as well as other
-information used to calculate the final score), use the `--out` flag:
+information used to calculate the final score), use the `--tsv_out` flag:
 
 ```bash
 python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --recpath censible/data/test/1wdn_receptor.pdb \
                   --smina_exec_path /usr/local/bin/smina \
                   --obabel_exec_path /usr/local/bin/obabel \
-                  --out test_out.tsv
+                  --tsv_out test_out.tsv
 ```
+
+CENsible will output affinity to `test_out.tsv`, an Excel-compatible
+tab-delimited file. It will also output the following additional information:
+
+- A text description of the pre-calculated terms the model uses.
+- The pre-calculated terms themselves (calculated using _smina_).
+- The pre-calculated terms after scaling/normalization.
+- The weights the model assigns to each pre-calculated term.
+- The predicted contribution of each pre-calculated term to the overall affinity
+  (i.e., the product of the normalized pre-calculated term and its weight).
+
+**NOTE:** The final affinity is the sum of the predicted contributions.
+
+### Saving Gaussian Steric Terms to a PDB File
+
+CENsible can also output the per-atom contributions associated with _smina_'s
+Gaussian steric (`atom_type_gaussian`) terms to a PDB file. Use the `--pdb_out`
+term. For example:
+
+```bash
+python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
+                  --recpath censible/data/test/1wdn_receptor.pdb \
+                  --smina_exec_path /usr/local/bin/smina \
+                  --obabel_exec_path /usr/local/bin/obabel \
+                  --tsv_out test_out.tsv \
+                  --pdb_out test_out.pdb
+```
+
+The `HEADER` fields of the output PDB file contain useful information for
+visualization.
 
 ### Using Other CENsible Models
 
@@ -139,47 +169,11 @@ python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --smina_exec_path /usr/local/bin/smina \
                   --obabel_exec_path /usr/local/bin/obabel \
                   --model_dir ./my_model_dir/ \
-                  --out test_out.tsv
+                  --tsv_out test_out.tsv
 ```
 
 The model directory should contain the following files:
 
--   `model.pt`: The trained model.
--   `precalc_term_scales.npy`: The pre-calculated term scales.
--   `which_precalc_terms_to_keep.npy`: The pre-calculated terms the model uses.
-
-## CENsible Output
-
-### Without the `--out` Flag
-
-If you do not use the `--out` flag, CENsible will only report the predicted
-affinity. For example:
-
-```text
-CENsible 1.0
-
-receptor: censible/data/test/1wdn_receptor.pdb
-ligand:   censible/data/test/1wdn_ligand.pdb
-model:    /mnt/Data/jdurrant/cenet/censible/data/model_allcen3/
-
-score:    6.11017 (775.94 nM)
-
-WARNING: No output file specified (--out). Not saving weights and contributions.
-
-=====================================
-```
-
-### With the `--out` Flag
-
-If the user specifies the `--out` flag, CENsible will output the same
-information to the specified Excel-compatible tab-delimited file. Additionally,
-it will output the following:
-
-- A text description of the pre-calculated terms the model uses.
-- The pre-calculated terms themselves (calculated using _smina_).
-- The pre-calculated terms after scaling/normalization.
-- The weights the model assigns to each pre-calculated term.
-- The predicted contribution of each pre-calculated term to the overall affinity
-  (i.e., the product of the normalized pre-calculated term and its weight).
-
-**NOTE:** The final affinity is the sum of the predicted contributions.
+- `model.pt`: The trained model.
+- `precalc_term_scales.npy`: The pre-calculated term scales.
+- `which_precalc_terms_to_keep.npy`: The pre-calculated terms the model uses.
