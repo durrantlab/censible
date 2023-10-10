@@ -154,8 +154,8 @@ python predict.py --ligpath censible/data/test/1wdn_ligand.mol2 \
                   --pdb_out test_out.pdb
 ```
 
-The `HEADER` fields of the output PDB file contain useful information for
-visualization.
+The per-atom terms are placed in the beta column. See the `HEADER` fields of the
+output PDB file for additional useful information.
 
 ### Using Other CENsible Models
 
