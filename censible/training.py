@@ -207,6 +207,7 @@ def train_single_fold(
     test_mses = []
     test_ames = []
     test_pearsons = []
+    train_pearsons = []
     coefs_all = []
 
     for epoch_idx in range(params["epochs"]):
@@ -218,6 +219,10 @@ def train_single_fold(
         # good to get to the bottom of why reset doesn't work here. As is,
         # skipping first generation (effectively).
         optimizer.step()
+
+        # Keep track of affinities and predictions to calculate pearson's on
+        # training data too.
+        predictions_and_labels = []
 
         for train_batch in train_dataset:
             # print("    batch", batch_idx)
@@ -276,7 +281,26 @@ def train_single_fold(
 
             training_losses.append(float(training_loss))
 
+            prediction_and_label = np.vstack((
+                output.detach().flatten().cpu().numpy(), 
+                affinity_label_for_training.flatten().cpu().numpy()
+            )).T
+            predictions_and_labels.append(prediction_and_label)
+
         scheduler.step()
+
+        if len(predictions_and_labels) > 0:
+            predictions_and_labels = np.vstack(predictions_and_labels)
+
+            # Calculate pearson's correlation coefficient on training data
+            pearson_coeff, pvalue = pearsonr(
+                predictions_and_labels[:, 0], predictions_and_labels[:, 1]
+            )
+
+            train_pearsons.append(pearson_coeff)
+        else:
+            # First run through, no training actually occurs.
+            train_pearsons.append(-9999)
 
         # Evaluate the performance on test set, given that you just finished one
         # epoch of training.
@@ -323,7 +347,7 @@ def train_single_fold(
             val_ame = np.mean(np.abs(test_results - test_labels))
 
             pearson_coeff = pearsonr(test_results, test_labels)[0]
-            print("Validation", epoch_idx, val_rmse, val_ame, pearson_coeff)
+            print("Validation", epoch_idx, val_rmse, val_ame, pearson_coeff, train_pearsons[-1])
             test_mses.append(val_rmse)
             test_ames.append(val_ame)
             test_pearsons.append(pearson_coeff)
@@ -336,6 +360,7 @@ def train_single_fold(
         test_mses,
         test_ames,
         test_pearsons,
+        train_pearsons,
         training_losses,
         test_coefs_predict_lst,
         test_weighted_terms_lst,

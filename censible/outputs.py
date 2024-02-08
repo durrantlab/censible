@@ -246,7 +246,8 @@ def save_outputs(
     labels: np.ndarray,  # Numeric labels
     results: np.ndarray,  # Predictions
     gninatypes_filenames: list[tuple[str, str]],
-    pearsons: list[float],
+    test_pearsons: list[float],
+    train_pearsons: list[float],
     coefs_predict_lst: list[np.ndarray],
     contributions_lst: list[np.ndarray],
     which_precalc_terms_to_keep: np.ndarray,
@@ -268,8 +269,10 @@ def save_outputs(
         gninatypes_filenames (list[tuple[str, str]]): A list of 2-tuples, where
             each 2-tuple represents the gninatypes filenames for a protein and
             ligand, respectively.
-        pearsons (list[float]): A list of floats, where each float represents
+        test_pearsons (list[float]): A list of floats, where each float represents
             the Pearson's correlation coefficient for a test set.
+        train_pearsons (list[float]): A list of floats, where each float represents
+            the Pearson's correlation coefficient for a training set.
         coefs_predict_lst (list[np.ndarray]): A list of numpy arrays, where
             each numpy array represents the coefficients for a given example.
         contributions_lst (list[np.ndarray]): A list of numpy arrays, where
@@ -309,13 +312,13 @@ def save_outputs(
 
     # Clear plot and start over
     plt.clf()
-    plt.plot(pearsons)
+    plt.plot(test_pearsons)
     plt.savefig(f"{report_subdir}pearsons_per_epoch__test.png")
 
     # Predictions vs. reality
     plt.clf()
     j = sns.jointplot(x=labels, y=results)
-    plt.suptitle("R = %.2f" % pearsons[-1])
+    plt.suptitle("R = %.2f" % test_pearsons[-1])
     plt.savefig(f"{report_subdir}label_vs_predict_final__test.png")
 
     # Show some representative weights. Should be similar across proteins, but
@@ -345,4 +348,9 @@ def save_outputs(
     #     f.write("\n".join(term_names[which_precalc_terms_to_keep]))
 
     # Save pearsons as csv
-    np.savetxt(f"{report_subdir}pearsons.csv", pearsons, delimiter=",", fmt="%.8f")
+    np.savetxt(f"{report_subdir}pearsons_on_testing.csv", test_pearsons, delimiter=",", fmt="%.8f")
+
+    # Save pearsons on training set as csv
+    np.savetxt(
+        f"{report_subdir}pearsons_on_training.csv", train_pearsons, delimiter=",", fmt="%.8f"
+    )
