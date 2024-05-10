@@ -188,7 +188,7 @@ def load_example(
 
 
 # load in model -- from torch
-def load_model(model_dir: str):
+def load_model(model_dir: str, use_cpu: bool):
     """Load the model, the smina terms mask, and the smina term scales.
     
     Args:
@@ -209,7 +209,10 @@ def load_model(model_dir: str):
 
     dims = (28, 48, 48, 48)
     model = CENet(dims, len(norm_factors_masked))
-    model.load_state_dict(torch.load(model_path))
+    if use_cpu:
+        model.load_state_dict(torch.load(model_path,map_location=torch.device('cpu')))
+    else:
+        model.load_state_dict(torch.load(model_path))
     model.eval()
 
     smina_ordered_terms_path = data_file_path("smina_ordered_terms.txt")

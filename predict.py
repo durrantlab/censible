@@ -13,7 +13,7 @@ args = get_cmd_args()
 
 # load the model
 (model, smina_terms_mask, norm_factors_masked, smina_ordered_terms_names) = load_model(
-    args.model_dir
+    args.model_dir, args.use_cpu
 )
 
 print("")
