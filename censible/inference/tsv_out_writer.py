@@ -38,7 +38,7 @@ class TSVWriter:
         Args:
             predicted_affinity (torch.Tensor): The predicted affinity.
         """
-        summary = "CENsible 1.1\n\n"
+        summary = "CENsible 1.2\n\n"
         summary += f"receptor: {self.args.recpath}\n"
         summary += f"ligand:   {self.lig_path}\n"
         summary += f"model:    {self.args.model_dir}\n\n"

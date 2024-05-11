@@ -1,4 +1,4 @@
-# CENsible 1.1
+# CENsible 1.2
 
 ## Introduction
 
