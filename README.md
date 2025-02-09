@@ -14,6 +14,7 @@ repository is available at
 [https://github.com/durrantlab/censible](https://github.com/durrantlab/censible).
 A [Google Colab is also
 available](https://durrantlab.pitt.edu/apps/censible/web/) for easy testing.
+Read the CENsible paper [here](https://doi.org/10.1021/acs.jcim.4c00825).
 
 These instructions describe how to use CENsible for inference (prediction). If
 you wish to train your own CENsible model, see `train/README.md` for some tips.
