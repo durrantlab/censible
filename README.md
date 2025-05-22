@@ -1,13 +1,6 @@
 <h1 align="center">CENsible</h1>
 
 <p align="center">
-    <a href="https://github.com/durrantlab/censible/actions/workflows/tests.yml">
-        <img src="https://github.com/durrantlab/censible/actions/workflows/tests.yml/badge.svg" alt="Build Status ">
-    </a>
-    <!-- <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/censible"> -->
-    <a href="https://codecov.io/gh/durrantlab/censible">
-        <img src="https://codecov.io/gh/durrantlab/censible/branch/main/graph/badge.svg" alt="codecov">
-    </a>
     <a href="https://github.com/durrantlab/censible/releases">
         <img src="https://img.shields.io/github/v/release/durrantlab/censible" alt="GitHub release (latest by date)">
     </a>
@@ -24,13 +17,6 @@ small-molecule binding affinities. Rather than predict a binding affinity
 directly, it predicts the contributions of pre-calculated terms to the overall
 affinity, thus providing interpretable output. CENsible insights are useful for
 subsequent lead optimization.
-
-We release CENsible under the terms of the [GNU General Public License
-v3.0](https://github.com/durrantlab/censible/blob/main/LICENSE.md). The git
-repository is available at
-[https://github.com/durrantlab/censible](https://github.com/durrantlab/censible).
-A [Google Colab is also
-available](https://durrantlab.pitt.edu/apps/censible/web/) for easy testing.
 
 ## Installation
 
