@@ -1,0 +1,11 @@
+[run]
+branch = true
+data_file = .coverage
+source = "tests"
+
+[paths]
+source = censible
+
+[report]
+show_missing = true
+skip_empty = true

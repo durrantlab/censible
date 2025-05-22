@@ -1,26 +1,33 @@
+**/.DS_Store
 __pycache__
-imgs
+.venv
+.env
 
-t
-smina/
-pdbid_bins.json
-pdbbind2020.hdf5
-*.molcache2
-create_caches2.py
-cache/
-1.pdbbind2020/
-*.old
-*.types
+# Jupyter Notebook
+**/.ipynb_checkpoints
 
-train/*.npy
+# IDE settings
 .vscode/
-.fuse*
-train/pdbbind
-.DS_Store
-*.converted.pdb
+.idea/
 
-*.png
-*.xyz
-tmp.*
-tmp
-src
+public/
+
+.cache
+
+node_modules
+package-lock.json
+package.json
+
+# pixi environments
+.pixi
+*.egg-info
+
+# coverage
+coverage.xml
+report.xml
+.coverage
+
+test_*
+*.molcache2
+cache/
+*.converted.pdb
