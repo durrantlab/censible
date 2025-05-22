@@ -1,6 +1,16 @@
-# CENsible 1.2
+<h1 align="center">CENsible</h1>
 
-## Introduction
+<p align="center">
+    <a href="https://github.com/durrantlab/censible/releases">
+        <img src="https://img.shields.io/github/v/release/durrantlab/censible" alt="GitHub release (latest by date)">
+    </a>
+    <a href="https://github.com/durrantlab/censible/blob/main/LICENSE" target="_blank">
+        <img src="https://img.shields.io/github/license/durrantlab/censible" alt="License">
+    </a>
+    <a href="https://github.com/durrantlab/censible/" target="_blank">
+        <img src="https://img.shields.io/github/repo-size/durrantlab/censible" alt="GitHub repo size">
+    </a>
+</p>
 
 CENsible uses deep-learning context explanation networks (CENs) to predict
 small-molecule binding affinities. Rather than predict a binding affinity
@@ -8,93 +18,27 @@ directly, it predicts the contributions of pre-calculated terms to the overall
 affinity, thus providing interpretable output. CENsible insights are useful for
 subsequent lead optimization.
 
-We release CENsible under the terms of the [GNU General Public License
-v3.0](https://github.com/durrantlab/censible/blob/main/LICENSE.md). The git
-repository is available at
-[https://github.com/durrantlab/censible](https://github.com/durrantlab/censible).
-A [Google Colab is also
-available](https://durrantlab.pitt.edu/apps/censible/web/) for easy testing.
-Read the CENsible paper [here](https://doi.org/10.1021/acs.jcim.4c00825).
-
-These instructions describe how to use CENsible for inference (prediction). If
-you wish to train your own CENsible model, see `train/README.md` for some tips.
-
 ## Installation
 
-### 1. Install Python
-
-We recommend using anaconda python to create a new environment. We have tested
-CENsible on Python 3.9.16.
-
-```bash
-conda create -n censible python=3.9.16
-conda activate censible
-```
-
-### 2. Clone the Repository
+We recommend using [pixi](https://pixi.sh/latest/) to reproduce out Python virtual environments.
+This will painlessly handle installing the appropriate Python, PyTorch, and CUDA versions.
+Once you have pixi installed and the [repository cloned](https://github.com/durrantlab/censible), all you have to do is run the following command.
 
 ```bash
-git clone https://github.com/durrantlab/censible.git
-cd censible
+pixi install
 ```
 
-### 3. Install Dependencies
-
-If you wish only to use CENsible for inference (prediction), install the
-dependencies in the `requirements_predict.txt` file:
+Once that is finished, you can activate the new Python virtual environment.
 
 ```bash
-pip install -r requirements_predict.txt
+pixi shell
 ```
 
-**NOTE:** If you don't have CUDA installed on your system, you may need to edit
-the `requirements_predict.txt` file to install the CPU version of PyTorch. If
-so, run the censible script using the `--use_cpu` flag (see below).
-
-### 4. Install _smina_
-
-CENsible uses _smina_ to calculate the pre-calculated terms. Visit the [smina
-website](https://sourceforge.net/projects/smina/) to download the latest
-version.
-
-You can also install _smina_ using Anaconda:
-
-```bash
-conda install -c conda-forge smina
-```
-
-We used the Oct 15 2019 version of _smina_ (based onAutoDock Vina 1.1.2) to
-calculate terms for testing and training, though we expect other versions will
-work equally well.
-
-### 5. Install _Open Babel_
-
-CENsible uses _Open Babel_ to standardize the user-provided protein and
-small-molecule files. Visit the [Open Babel
-repository](https://github.com/openbabel/openbabel) to download the latest
-version.
-
-You can also install _Open Babel_ using Anaconda:
-
-```bash
-conda install -c conda-forge openbabel
-```
-
-We used Open Babel 3.0.0 (Mar 11 2020) for training and testing. We rescored the
-virtual screens described in our manuscript using Babel 3.1.0 (Oct 28 2022),
-which also worked well.
-
-### 6. Test the CENsible Installation
-
-To test the installation, run the following command:
+To test the installation, run the following command.
 
 ```bash
 ./test_predict.sh
 ```
-
-**NOTE:** This script assumes _smina_ and _obaebl_ are in your PATH.
-Additionally, if you have installed a version of Pytorch that does not support
-CUDA, you must edit the `test_predict.sh` file to add the `--use_cpu` flag.
 
 ## Usage
 
@@ -178,3 +122,13 @@ The model directory should contain the following files:
 - `model.pt`: The trained model.
 - `precalc_term_scales.npy`: The pre-calculated term scales.
 - `which_precalc_terms_to_keep.npy`: The pre-calculated terms the model uses.
+
+## Citation
+
+If you use CENsible in your work, please cite the following literature.
+
+Bhatt, R., Koes, D. R., & Durrant, J. D. (2024). CENsible: interpretable insights into small-molecule binding with Context Explanation Networks. *Journal of Chemical Information and Modeling, 64*(12), 4651-4660. DOI: [10.1021/acs.jcim.4c00825](https://doi.org/10.1021/acs.jcim.4c00825)
+
+## License
+
+This project is released under the GPL-3.0-only License as specified in `LICENSE.md`.

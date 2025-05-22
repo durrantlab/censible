@@ -1,4 +1,0 @@
--f https://download.pytorch.org/whl/cu111/torch_stable.html
-torch==1.9.1+cu111
-numpy==1.23.5
-molgrid==0.5.3
